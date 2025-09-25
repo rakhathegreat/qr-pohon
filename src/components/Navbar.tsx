@@ -33,7 +33,7 @@ export default function Navbar() {
       <button
         onClick={() => nav('/scan')}
         className={`fixed left-1/2 -translate-x-1/2 z-30
-                   w-18 h-18 rounded-full ${location.pathname === '/scan' ? 'bg-brand-600 bottom-5' : 'bg-brand-500 bottom-3'} text-white
+                   w-18 h-18 rounded-full ${location.pathname === '/scan' ? 'bg-brand-600 bottom-4' : 'bg-brand-500 bottom-3'} text-white
                    shadow-lg transition-transform duration-300 ease-in-out
                    flex items-center justify-center`}
         aria-label="Scan QR"

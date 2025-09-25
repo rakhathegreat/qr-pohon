@@ -13,16 +13,10 @@ const Scan = () => {
     html5Qrcode
       .start(
         { facingMode: 'environment' },
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.777778,
-        },
+        { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.777778 },
         (decodedText) => {
-          html5Qrcode.stop().then(() => {
-            scannerRef.current = null;
-            alert(`QR ditemukan: ${decodedText}`);
-          });
+          const id = decodedText.trim();
+          window.location.href = `/detail/${encodeURIComponent(id)}`;
         },
         () => {}
       )
@@ -41,10 +35,7 @@ const Scan = () => {
 
   return (
     <div className="relative w-full h-full">
-      <div
-        id={qrcodeRegionId}
-        className="absolute inset-0 w-full h-full object-cover"
-      />
+      <div id={qrcodeRegionId} className="absolute inset-0 w-full h-full object-cover" />
       <Navbar />
     </div>
   );
