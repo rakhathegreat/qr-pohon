@@ -56,7 +56,7 @@ const Dashboard: React.FC = () => {
   };
   const handleViewQR = (id: string) => {
     // bisa URL frontend atau id saja
-    const url = `${window.location.origin}/detail/${id}`;
+    const url = `${id}`;
     setQrValue(url);
     setQrOpen(true);
   };
