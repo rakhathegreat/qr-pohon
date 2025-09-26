@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import Input from '../components/Input'
@@ -12,13 +12,51 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
-  async function handleLogin() {
-    setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    setLoading(false)
-    if (error) return alert(error.message)
-    nav('/main')
+ const redirectByRole = async (userId: string) => {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single()
+
+  if (error) {
+    console.error("Gagal ambil role:", error.message)
+    nav("/main") // fallback
+    return
   }
+
+  if (data?.role === "admin") {
+    nav("/admin/dashboard")
+  } else {
+    nav("/main")
+  }
+}
+
+/* ---------- login email ---------- */
+async function handleLogin() {
+  setLoading(true)
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+  setLoading(false)
+
+  if (error) {
+    alert(error.message)
+    return
+  }
+
+  if (data?.user) {
+    await redirectByRole(data.user.id)
+  }
+}
+
+/* ---------- cek session yang sudah ada ---------- */
+useEffect(() => {
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (session?.user) {
+      redirectByRole(session.user.id)
+    }
+  })
+}, [])
+
 
   return (
     <div className="min-h-screen flex items-center bg-brand-50">

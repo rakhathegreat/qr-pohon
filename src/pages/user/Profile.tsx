@@ -1,8 +1,9 @@
 // src/pages/Profile.tsx
 import { useEffect, useState } from "react"
 import { LogOut, QrCode } from "lucide-react"
-import Navbar from "../components/Navbar"
-import Button from "../components/Button"
+import Navbar from "../../components/Navbar"
+import Button from "../../components/Button"
+import { supabase } from "../../lib/supabase"
 
 const Profile = () => {
   const [scanCount, setScanCount] = useState(0)
@@ -13,9 +14,15 @@ const Profile = () => {
     setScanCount(saved)
   }, [])
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // 1. hapus session Supabase
+    await supabase.auth.signOut()
+
+    // 2. bersihkan localStorage
     localStorage.removeItem("token")
-    localStorage.removeItem("scanCount") // opsional: reset juga
+    localStorage.removeItem("scanCount")
+
+    // 3. arahkan ke login
     window.location.href = "/login"
   }
 
@@ -27,8 +34,8 @@ const Profile = () => {
         {/* Kartu statistik */}
         <div className="bg-white rounded-2xl p-6 shadow">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-indigo-100 rounded-full">
-              <QrCode className="w-6 h-6 text-indigo-600" />
+            <div className="p-3 bg-brand-100 rounded-full">
+              <QrCode className="w-6 h-6 text-brand-600" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Total Scan</p>

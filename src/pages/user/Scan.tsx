@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
-import Navbar from '../components/Navbar';
+import Navbar from '../../components/Navbar';
 
 const qrcodeRegionId = 'qr-reader';
 

@@ -2,10 +2,10 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Leaf } from 'lucide-react'
-import Navbar from '../components/Navbar'
-import { Card, CardHeader, CardTitle, CardContent } from '../components/Card'
-import Badge from '../components/Badge'
-import { supabase } from '../lib/supabase'
+import Navbar from '../../components/Navbar'
+import { Card, CardHeader, CardTitle, CardContent } from '../../components/Card'
+import Badge from '../../components/Badge'
+import { supabase } from '../../lib/supabase'
 
 export default function Detail() {
   const { id } = useParams<{ id: string }>() // UUID string
@@ -116,7 +116,7 @@ export default function Detail() {
         </Card>
 
         {/* Characteristics */}
-        <Card className="px-6 py-6 space-y-4">
+        <Card className="px-6 py-6 space-y-4 pb-10">
           <CardHeader>
             <CardTitle className="text-brand-600">Karakteristik</CardTitle>
           </CardHeader>
