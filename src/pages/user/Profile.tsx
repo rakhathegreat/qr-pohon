@@ -23,7 +23,7 @@ const Profile = () => {
     localStorage.removeItem("scanCount")
 
     // 3. arahkan ke login
-    window.location.href = "/login"
+    window.location.href = "/"
   }
 
   return (
