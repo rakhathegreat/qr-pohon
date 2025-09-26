@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import type { Tree } from './Tree';
 import { ArrowLeft, X } from 'lucide-react';
+import uuid from 'react-uuid';
 
 const AddTree: React.FC = () => {
   const nav = useNavigate();
   const [form, setForm] = useState<Tree>({
-    id: '',
+    id: uuid().toString(),
     common_name: '',
     scientific_name: '',
     taxonomy: {
