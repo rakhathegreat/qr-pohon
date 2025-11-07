@@ -2,7 +2,7 @@
 import React from 'react';
 import { TableRow as MuiTableRow, TableCell, IconButton, Tooltip } from '@mui/material';
 import { Edit, Delete, QrCode } from '@mui/icons-material';
-import { type Tree } from './Tree';
+import { type Tree } from '../../types/tree';
 
 type Props = {
   tree: Tree;

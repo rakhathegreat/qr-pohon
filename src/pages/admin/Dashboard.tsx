@@ -1,283 +1,331 @@
-import React, { useEffect, useState } from 'react';
-import type { Tree } from './Tree';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { LogOut, Search, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import type { Tree } from '../../types/tree';
 import { supabase } from '../../lib/supabase';
-import {
-  Filter, Search, Trash, SquarePen, QrCode, SlidersVertical, LogOut
-} from 'lucide-react';
 import QRModal from '../../components/QRModal';
+import TreeCard from '../../components/admin/TreeCard';
+import TreeTable from '../../components/admin/TreeTable';
+import Button, { buttonVariants } from '../../components/Button';
+import Input from '../../components/Input';
+import { cn } from '../../lib/utils';
 
-const limitOpts = [10, 20, 50, 100];
+const limitOptions = [10, 20, 50, 100];
 
-const Dashboard: React.FC = () => {
-    const [trees, setTrees] = useState<Tree[]>([]);
-    const [filter, setFilter] = useState('all');      // select filter
-    const [sort, setSort]           = useState('name-asc');
-    const [search, setSearch]       = useState('');
-    const [page, setPage]           = useState(1);
-    const [perPage, setPerPage]     = useState(10);
-    const [total, setTotal]         = useState(0);
-    const [qrOpen, setQrOpen] = useState(false);
-    const [qrValue, setQrValue]   = useState('');
+const sortOptions = [
+  { value: 'name-asc', label: 'Name A-Z' },
+  { value: 'name-desc', label: 'Name Z-A' },
+  { value: 'recent', label: 'Most Recent' },
+  { value: 'oldest', label: 'Oldest' },
+];
 
-  const fetch = async () => {
-    let q = supabase
-      .from('trees')
-      .select('*', { count: 'exact' })
-      .ilike('common_name', `%${search}%`);
+type StatCardProps = {
+  label: string;
+  value: string;
+  helper?: string;
+  className?: string;
+};
 
-    // simple sort
-    if (sort === 'name-asc')   q = q.order('common_name', { ascending: true });
-    if (sort === 'name-desc')  q = q.order('common_name', { ascending: false });
-    if (sort === 'recent')     q = q.order('created_at', { ascending: false });
-    if (sort === 'oldest')     q = q.order('created_at', { ascending: true });
+const StatCard = ({ label, value, helper, className }: StatCardProps) => (
+  <div className={cn('min-w-[180px] rounded-2xl border border-gray-100 bg-brand-50/80 p-4', className)}>
+    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</p>
+    <p className="mt-1 text-2xl font-bold text-gray-900">{value}</p>
+    {helper && <p className="text-xs text-gray-500">{helper}</p>}
+  </div>
+);
 
-    const from = (page - 1) * perPage;
-    const to   = from + perPage - 1;
-    q = q.range(from, to);
-
-    const { data, count, error } = await q;
-    if (!error) {
-      setTrees(data || []);
-      setTotal(count ?? 0);
-    }
-  };
+const Dashboard = () => {
+  const navigate = useNavigate();
+  const [trees, setTrees] = useState<Tree[]>([]);
+  const [sort, setSort] = useState<string>(sortOptions[0].value);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(limitOptions[0]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [qrValue, setQrValue] = useState('');
 
   useEffect(() => {
-    fetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, sort, search, page, perPage]);
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-  /* ---------- actions ---------- */
-  const handleEdit   = (id: string) => nav(`/admin/edit/${id}`);
+  const fetchTrees = useCallback(async () => {
+    setLoading(true);
+    let query = supabase
+      .from('trees')
+      .select('*', { count: 'exact' })
+      .ilike('common_name', `%${debouncedSearch}%`);
+
+    switch (sort) {
+      case 'name-desc':
+        query = query.order('common_name', { ascending: false });
+        break;
+      case 'recent':
+        query = query.order('created_at', { ascending: false });
+        break;
+      case 'oldest':
+        query = query.order('created_at', { ascending: true });
+        break;
+      default:
+        query = query.order('common_name', { ascending: true });
+    }
+
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+    query = query.range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) {
+      console.error('Failed to fetch trees', error.message);
+    } else {
+      setTrees(data ?? []);
+      setTotal(count ?? 0);
+    }
+
+    setLoading(false);
+  }, [debouncedSearch, page, perPage, sort]);
+
+  useEffect(() => {
+    fetchTrees();
+  }, [fetchTrees]);
+
+  const pageCount = useMemo(() => Math.max(1, Math.ceil(total / perPage)), [perPage, total]);
+  const start = total === 0 ? 0 : (page - 1) * perPage + 1;
+  const end = Math.min(page * perPage, total);
+
   const handleDelete = async (id: string) => {
     if (!window.confirm('Hapus data ini?')) return;
     await supabase.from('trees').delete().eq('id', id);
-    fetch();                 // refresh
+    fetchTrees();
   };
+
+  const handleEdit = (id: string) => navigate(`/admin/edit/${id}`);
+
   const handleViewQR = (id: string) => {
-    // bisa URL frontend atau id saja
-    const url = `${id}`;
+    const url = `${window.location.origin}/detail/${id}`;
     setQrValue(url);
     setQrOpen(true);
   };
 
   const handleLogout = async () => {
-    // 1. hapus session Supabase
     await supabase.auth.signOut();
-
-    // 2. bersihkan localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('scanCount');
+    navigate('/login', { replace: true });
+  };
 
-    // 3. arahkan ke login
-    window.location.href = '/login';
-  }
+  const handleAddTree = () => navigate('/admin/add');
 
-  /* ---------- pagination text ---------- */
-  const start = (page - 1) * perPage + 1;
-  const end   = Math.min(page * perPage, total);
+  const handlePerPageChange = (value: number) => {
+    setPerPage(value);
+    setPage(1);
+  };
 
-    // Simple navigation using window.location
-    function nav(path: string): void {
-        window.location.href = path;
-    }
   return (
-    <div className="h-screen px-5 py-5 space-y-4">
-        
-      <div className='flex items-center justify-between w-full mb-10'>
-        <button onClick={handleLogout} className="md:hidden border border-gray-300 p-2 rounded-lg">
-            <LogOut className="w-5 h-5 text-gray-800" />
-        </button>
-        <h1 className="font-sans text-xl font-bold">Dashboard</h1>
-        <div className='w-10 h-10 bg-gray-200 rounded-full'></div>
-      </div>
-      <div className="flex items-center justify-end w-full">
-        <button onClick={() => nav('/admin/add')} className="text-white bg-brand-700 hover:bg-brand-800 font-medium rounded-lg text-sm px-5 py-2">
-          + Add Tree
-        </button>
-      </div>
-
-      {/* Filter / Sort / Search */}
-      <div className="w-full gap-4 space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="flex items-center border border-gray-300 rounded-lg focus-within:ring ring-brand-700">
-            <div className="py-2 pl-2 pr-1 bg-white rounded-lg">
-              <Filter className="w-4 h-4 text-gray-800" />
-            </div>
-            <select
-              className="font-sans w-full text-gray-800 text-sm font-semibold py-2 rounded-lg bg-white focus:outline-none"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-            >
-              <option value="all">Filters</option>
-              <option value="name-asc">Name A-Z</option>
-              <option value="name-desc">Name Z-A</option>
-              <option value="recent">Most Recent</option>
-              <option value="oldest">Oldest</option>
-            </select>
-          </div>
-
-          <div className="flex items-center border border-gray-300 rounded-lg focus-within:ring ring-brand-700">
-            <div className="py-2 pl-2 pr-1 bg-white rounded-lg">
-              <SlidersVertical className="w-4 h-4 text-gray-800" />
-            </div>
-            <select
-              className="font-sans w-full text-gray-800 text-sm font-semibold py-2 rounded-lg bg-white focus:outline-none"
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-            >
-              <option value="all">Sort</option>
-              <option value="name-asc">Name A-Z</option>
-              <option value="name-desc">Name Z-A</option>
-              <option value="recent">Most Recent</option>
-              <option value="oldest">Oldest</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="relative flex items-center border border-gray-300 rounded-lg focus-within:ring ring-brand-700">
-          <Search className="absolute left-3 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search..."
-            className="font-sans w-full text-sm font-medium text-gray-800 py-2 pl-10 pr-4 rounded-lg bg-white focus:outline-none"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Pagination info */}
-      <div className="flex text-sm text-gray-400 font-medium items-center justify-between w-full">
-        <p>
-          {start} - {end} of {total} results
-        </p>
-        <div className="flex items-center gap-4">
-          <p>Items per page</p>
-          <select
-            className="font-sans text-gray-800 font-medium p-2 rounded-lg bg-white border border-gray-300 focus:outline-none focus:ring ring-brand-700"
-            value={perPage}
-            onChange={(e) => {
-              setPerPage(Number(e.target.value));
-              setPage(1);
-            }}
-          >
-            {limitOpts.map((n) => (
-              <option key={n} value={n}>{n}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Cards */}
-      <div className="space-y-3">
-        {trees.map((tree) => (
-          <div
-            key={tree.id}
-            className="flex flex-col gap-2 p-6 border border-gray-300 rounded-lg"
-          >
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <p className="text-sm font-medium text-gray-500">Tree ID</p>
-              <p className="text-sm truncate font-medium text-gray-500 text-end">{tree.id}</p>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <p className="text-sm font-medium text-gray-500">Nama Pohon</p>
-              <p className="text-sm truncate font-semibold text-gray-900 text-end">{tree.common_name}</p>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <p className="text-sm font-medium text-gray-500">Scientific Name</p>
-              <p className="text-sm truncate font-semibold italic text-gray-900 text-end">{tree.scientific_name}</p>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <p className="text-sm font-medium text-gray-500">Coordinate</p>
-              <p className="text-sm truncate font-semibold text-gray-900 text-end">
-                {tree.coordinates.latitude},{tree.coordinates.longitude}
+    <div className="min-h-screen bg-stone-50 px-4 py-6 pb-28 sm:pb-10">
+      <div className="mx-auto max-w-6xl space-y-6">
+        <header className="rounded-2xl border border-brand-100 bg-white/90 p-5">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-500">
+                Admin Dashboard
+              </p>
+              <h1 className="font-geist text-2xl font-medium text-gray-900 sm:text-3xl">photobooth-blob</h1>
+              <p className="text-sm text-gray-500">
+                Pantau dan kelola data pohon dengan cepat melalui tampilan tabel & kartu responsif.
               </p>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <p className="text-sm font-medium text-gray-500">Location</p>
-              <p className="text-sm truncate font-semibold text-gray-900 text-end">{tree.coordinates.location}</p>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <p className="text-sm font-medium text-gray-500">Created Date</p>
-              <p className="text-xs truncate font-semibold text-gray-500 text-end">
-                {tree.created_at
-                  ? new Date(tree.created_at).toLocaleString('en-GB', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })
-                  : '-'}
-              </p>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 mt-4">
-              <button
-                onClick={() => handleViewQR(tree.id)}
-                className="w-full flex items-center justify-center gap-1 bg-brand-500 text-white hover:bg-brand-600 font-medium rounded-lg text-sm p-2"
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full sm:w-auto"
+                onClick={handleLogout}
               >
-                <QrCode className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => handleEdit(tree.id)}
-                className="w-full flex items-center justify-center gap-1 bg-brand-500 text-white hover:bg-brand-600 font-medium rounded-lg text-sm p-2"
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </Button>
+              <Button
+                size="sm"
+                className="hidden sm:inline-flex sm:w-auto"
+                onClick={handleAddTree}
               >
-                <SquarePen className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => handleDelete(tree.id)}
-                className="w-full flex items-center justify-center gap-1 bg-red-500 text-white hover:bg-red-600 font-medium rounded-lg text-sm p-2"
-              >
-                <Trash className="w-4 h-4" />
-              </button>
+                + Add Tree
+              </Button>
             </div>
           </div>
-        ))}
+        </header>
+
+        <section className="space-y-5 rounded-2xl border border-gray-200 bg-white p-5">
+          <div className="space-y-4 lg:grid lg:grid-cols-[2fr,1fr] lg:gap-4 lg:space-y-0">
+            <div className="relative">
+              <Search strokeWidth={2} className="pointer-events-none absolute left-3 top-1/2 h-4.5 w-4.5 z-10 -translate-y-1/2 text-gray-400" />
+              <Input
+                placeholder="Search trees..."
+                value={search}
+                onValueChange={(val) => {
+                  setSearch(val);
+                  setPage(1);
+                }}
+                size={'sm'}
+                className="pl-10 bg-white"
+              />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Sort by</p>
+                <select
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                  value={sort}
+                  onChange={(event) => {
+                    setSort(event.target.value);
+                    setPage(1);
+                  }}
+                >
+                  {sortOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Items / page
+                </p>
+                <select
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                  value={perPage}
+                  onChange={(event) => handlePerPageChange(Number(event.target.value))}
+                >
+                  {limitOptions.map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3 overflow-x-auto pb-1 sm:grid sm:grid-cols-3 sm:gap-4 sm:overflow-visible">
+            <StatCard
+              label="Total Results"
+              value={total.toString()}
+              helper="Daftar pohon di database"
+            />
+            <StatCard
+              label="Showing"
+              value={`${Math.min(start, total)} - ${Math.min(end, total)}`}
+              helper="Rentang halaman ini"
+            />
+            <StatCard
+              label="Page"
+              value={`${page}/${pageCount}`}
+              helper="Navigasi daftar pohon"
+            />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          {loading ? (
+            <div className="rounded-2xl border border-dashed border-brand-200 bg-white p-6 text-sm text-gray-500">
+              Loading trees…
+            </div>
+          ) : trees.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-brand-200 bg-white p-6 text-center text-sm text-gray-500">
+              No trees found. Coba ubah kata kunci atau tambah data baru.
+            </div>
+          ) : (
+            <>
+              <div className="space-y-3 lg:hidden">
+                {trees.map((tree) => (
+                  <TreeCard
+                    key={tree.id}
+                    tree={tree}
+                    onDelete={handleDelete}
+                    onEdit={handleEdit}
+                    onViewQr={handleViewQR}
+                    className="bg-white"
+                  />
+                ))}
+              </div>
+              <div className="hidden lg:block">
+                <TreeTable
+                  data={trees}
+                  onDelete={handleDelete}
+                  onEdit={handleEdit}
+                  onViewQr={handleViewQR}
+                />
+              </div>
+            </>
+          )}
+        </section>
+
+        {total > 0 && (
+          <div className="rounded-2xl border border-gray-200 bg-white p-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-gray-600">
+                Showing{' '}
+                <span className="font-semibold text-gray-900">{Math.min(start, total)}</span> -{' '}
+                <span className="font-semibold text-gray-900">{Math.min(end, total)}</span> dari{' '}
+                <span className="font-semibold text-gray-900">{total}</span> pohon
+              </p>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                <div className="flex flex-wrap justify-center gap-2">
+                  {Array.from({ length: pageCount }, (_, index) => index + 1).map((n) => (
+                    <button
+                      type="button"
+                      key={n}
+                      onClick={() => setPage(n)}
+                      className={cn(
+                        buttonVariants({ variant: n === page ? 'primary' : 'ghost', size: 'sm' }),
+                        'w-10 justify-center border border-brand-200'
+                      )}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="w-full sm:w-auto"
+                    disabled={page === 1}
+                    onClick={() => setPage((prev) => prev - 1)}
+                  >
+                    Prev
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="w-full sm:w-auto"
+                    disabled={page === pageCount || total === 0}
+                    onClick={() => setPage((prev) => prev + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <QRModal open={qrOpen} onClose={() => setQrOpen(false)} value={qrValue} />
       </div>
-
-        {/* ---------- Pagination ---------- */}
-        <div className="flex justify-between items-center">
-        <button
-            disabled={page === 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="text-sm text-gray-500 px-4 py-2 rounded border border-gray-500 bg-gray-100 disabled:opacity-50"
-        >
-            Prev
-        </button>
-
-        {/* Nomor halaman */}
-        <div className="flex items-center gap-2">
-            {Array.from({ length: Math.ceil(total / perPage) }, (_, i) => i + 1).map((n) => (
-            <button
-                key={n}
-                onClick={() => setPage(n)}
-                className={`text-sm px-4 py-2 rounded-md font-medium transition ${
-                n === page
-                    ? 'text-white bg-brand-500'
-                    : 'text-gray-400 border border-brand-500'
-                }`}
-            >
-                {n}
-            </button>
-            ))}
-        </div>
-
-        <button
-            disabled={page * perPage >= total}
-            onClick={() => setPage((p) => p + 1)}
-            className="text-sm px-4 py-2 rounded text-gray-500 border border-gray-500 bg-gray-100 disabled:opacity-50"
-        >
-            Next
-        </button>
-        </div>
-
-        <QRModal
-            open={qrOpen}
-            onClose={() => setQrOpen(false)}
-            value={qrValue}
-        />
+      <button
+        type="button"
+        onClick={handleAddTree}
+        className="sm:hidden fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-brand-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/40"
+        aria-label="Add new tree"
+      >
+        <Plus className="h-4 w-4" />
+        Add Tree
+      </button>
     </div>
   );
 };

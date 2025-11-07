@@ -45,10 +45,7 @@ const Profile = () => {
         </div>
 
         {/* tombol logout */}
-        <Button
-          className="w-full flex items-center justify-center gap-2 bg-red-500 text-white hover:bg-red-600"
-          onClick={handleLogout}
-        >
+        <Button variant="danger" size="full" className="gap-2" onClick={handleLogout}>
           <LogOut className="w-4 h-4" />
           Logout
         </Button>

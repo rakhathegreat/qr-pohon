@@ -62,7 +62,7 @@ useEffect(() => {
     <div className="min-h-screen flex items-center bg-brand-50">
       <div className="w-full h-screen flex flex-col justify-evenly px-10 py-10">
         {/* HEADER */}
-        <div className="font-inter flex flex-col items-center space-y-4">
+        <div className="font-sans flex flex-col items-center space-y-4">
           <img src={leaves} alt="" className="w-13" />
           <h1 className="text-4xl font-bold text-brand-800">Sign In</h1>
           <p className="text-sm font-medium text-gray-700">
@@ -79,7 +79,7 @@ useEffect(() => {
               type="email"
               placeholder="example@gmail.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onValueChange={setEmail}
             />
             <Input
               id="password"
@@ -87,7 +87,7 @@ useEffect(() => {
               type="password"
               placeholder="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onValueChange={setPassword}
             />
             <div className="flex justify-end">
               <a href="#" className="underline text-sm font-medium text-brand-800">
@@ -96,11 +96,7 @@ useEffect(() => {
             </div>
           </div>
 
-          <Button
-            onClick={handleLogin}
-            disabled={loading}
-            className="text-lg py-4 bg-brand-500 text-white rounded-lg"
-          >
+          <Button onClick={handleLogin} disabled={loading} size="full">
             {loading ? 'Signing in…' : 'Login'}
           </Button>
         </div>

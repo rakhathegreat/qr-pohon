@@ -1,32 +1,39 @@
-import React from 'react';
+import { forwardRef, type HTMLAttributes } from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '../lib/utils';
 
-type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline';
-
-export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: BadgeVariant;
-}
-
-const variantStyles: Record<BadgeVariant, string> = {
-  default: 'bg-brand-600 text-white',
-  secondary: 'bg-gray-200 text-gray-800',
-  destructive: 'bg-red-600 text-white',
-  outline: 'border border-brand-200 bg-brand-50 text-gray-800',
-};
-
-const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
-  ({ variant = 'default', className = '', ...props }, ref) => {
-    const base = 'inline-flex items-center rounded-full px-4 py-1 text-xs font-semibold';
-    const variantClass = variantStyles[variant];
-    return (
-      <span
-        ref={ref}
-        className={`${base} ${variantClass} ${className}`.trim()}
-        {...props}
-      />
-    );
+const badgeVariants = cva(
+  'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide',
+  {
+    variants: {
+      variant: {
+        default: 'bg-brand-600 text-white',
+        secondary: 'bg-gray-100 text-gray-800',
+        destructive: 'bg-red-100 text-red-700',
+        outline: 'border border-brand-200 bg-brand-50 text-brand-800',
+        success: 'bg-emerald-100 text-emerald-700',
+        info: 'bg-sky-100 text-sky-800',
+      },
+      tone: {
+        solid: '',
+        soft: 'bg-opacity-20',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+    },
   }
+);
+
+type BadgeProps = HTMLAttributes<HTMLSpanElement> & VariantProps<typeof badgeVariants>;
+
+const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
+  ({ className, variant, tone, ...props }, ref) => (
+    <span ref={ref} className={cn(badgeVariants({ variant, tone }), className)} {...props} />
+  )
 );
 
 Badge.displayName = 'Badge';
 
+export { Badge, badgeVariants };
 export default Badge;
