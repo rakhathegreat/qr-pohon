@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { QrCode, SquarePen, Trash } from 'lucide-react';
+import { CalendarDays, LocateFixed, MapPin, QrCode, SquarePen, Trash } from 'lucide-react';
 import type { Tree } from '../../types/tree';
+import { cn } from '../../lib/utils';
 
 type TreeCardProps = {
   tree: Tree;
@@ -10,79 +11,121 @@ type TreeCardProps = {
   className?: string;
 };
 
-type InfoRowProps = {
-  label: string;
-  value: ReactNode;
-  valueClassName?: string;
+type MetaChipProps = {
+  icon: ReactNode;
+  children: ReactNode;
+  className?: string;
 };
 
-const InfoRow = ({ label, value, valueClassName = 'text-gray-900' }: InfoRowProps) => (
-  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <p className="text-sm font-medium text-gray-500">{label}</p>
-    <p className={`text-sm truncate font-semibold text-end ${valueClassName}`}>{value}</p>
-  </div>
+const MetaChip = ({ icon, children, className }: MetaChipProps) => (
+  <span
+    className={cn(
+      'inline-flex items-center gap-1.5 rounded-full border border-gray-300 bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600',
+      className
+    )}
+  >
+    <span className="text-gray-400">{icon}</span>
+    {children}
+  </span>
 );
 
-type IconActionButtonProps = {
+type ActionButtonProps = {
   onClick: () => void;
   children: ReactNode;
-  variant?: 'primary' | 'danger';
+  variant?: 'default' | 'danger';
+  label: string;
 };
 
-const IconActionButton = ({ onClick, children, variant = 'primary' }: IconActionButtonProps) => {
+const ActionButton = ({
+  onClick,
+  children,
+  variant = 'default',
+  label,
+}: ActionButtonProps) => {
   const palette =
-    variant === 'primary'
-      ? 'bg-brand-500 text-white hover:bg-brand-600'
-      : 'bg-red-500 text-white hover:bg-red-600';
+    variant === 'danger'
+      ? 'border-red-200 text-red-600 hover:bg-red-50 focus-visible:ring-red-500'
+      : 'border-gray-300 bg-gray-100 text-gray-600 hover:border-brand-300 hover:text-brand-700 focus-visible:ring-brand-600';
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full flex items-center justify-center gap-1 font-medium rounded-lg text-sm p-2 ${palette}`}
+      title={label}
+      className={cn(
+        'inline-flex h-10 w-10 items-center justify-center rounded-lg border text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+        palette
+      )}
     >
       {children}
+      <span className="sr-only">{label}</span>
     </button>
   );
 };
 
-const TreeCard = ({ tree, onDelete, onEdit, onViewQr, className = '' }: TreeCardProps) => (
-  <div className={`flex flex-col gap-2 p-6 border border-gray-300 rounded-lg ${className}`}>
-    <InfoRow label="Tree ID" value={tree.id} valueClassName="text-gray-500" />
-    <InfoRow label="Nama Pohon" value={tree.common_name} />
-    <InfoRow label="Scientific Name" value={<em>{tree.scientific_name}</em>} />
-    <InfoRow
-      label="Coordinate"
-      value={`${tree.coordinates.latitude}, ${tree.coordinates.longitude}`}
-    />
-    <InfoRow label="Location" value={tree.coordinates.location} />
-    <InfoRow
-      label="Created Date"
-      value={
-        tree.created_at
-          ? new Date(tree.created_at).toLocaleString('en-GB', {
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })
-          : '-'
-      }
-      valueClassName="text-gray-500 text-xs"
-    />
+const truncateId = (value: string) =>
+  value.length <= 12 ? value : `${value.slice(0, 6)}…${value.slice(-4)}`;
 
-    <div className="flex items-center justify-end gap-2 mt-4">
-      <IconActionButton onClick={() => onViewQr(tree.id)}>
-        <QrCode className="w-4 h-4" />
-      </IconActionButton>
-      <IconActionButton onClick={() => onEdit(tree.id)}>
-        <SquarePen className="w-4 h-4" />
-      </IconActionButton>
-      <IconActionButton variant="danger" onClick={() => onDelete(tree.id)}>
-        <Trash className="w-4 h-4" />
-      </IconActionButton>
-    </div>
-  </div>
-);
+const formatCreatedDate = (value?: string | null) => {
+  if (!value) return '-';
+  return new Date(value).toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
+const TreeCard = ({ tree, onDelete, onEdit, onViewQr, className = '' }: TreeCardProps) => {
+  const coordinates = `${tree.coordinates.latitude}, ${tree.coordinates.longitude}`;
+
+  return (
+    <article
+      className={cn(
+        'group relative flex flex-col gap-3 overflow-hidden rounded-xl border border-gray-200 bg-white p-4 shadow-sm ring-1 ring-gray-100/80',
+        className
+      )}
+    >
+
+      <header className="flex gap-3 pt-1 flex-row items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">{tree.common_name}</h2>
+          <p className="text-sm italic text-gray-500">{tree.scientific_name}</p>
+        </div>
+        <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-3 py-1 text-xs font-medium text-brand-700">
+          <span className="text-[10px] uppercase text-brand-500">ID</span>
+          {truncateId(tree.id)}
+        </span>
+      </header>
+
+      <div className="flex flex-wrap gap-2 text-xs font-medium text-gray-600">
+        <MetaChip icon={<MapPin className="h-3.5 w-3.5" />}>
+          {tree.coordinates.location}
+        </MetaChip>
+        <MetaChip icon={<LocateFixed className="h-3.5 w-3.5" />}>
+          <span className="font-mono text-[11px]">{coordinates}</span>
+        </MetaChip>
+        <MetaChip icon={<CalendarDays className="h-3.5 w-3.5" />}>
+          {formatCreatedDate(tree.created_at)}
+        </MetaChip>
+      </div>
+
+      <div className="flex items-center justify-end gap-2">
+        <ActionButton onClick={() => onViewQr(tree.id)} label="Lihat QR">
+          <QrCode className="h-4 w-4" />
+        </ActionButton>
+        <ActionButton onClick={() => onEdit(tree.id)} label="Edit pohon">
+          <SquarePen className="h-4 w-4" />
+        </ActionButton>
+        <ActionButton
+          variant="danger"
+          onClick={() => onDelete(tree.id)}
+          label="Hapus pohon"
+        >
+          <Trash className="h-4 w-4" />
+        </ActionButton>
+      </div>
+    </article>
+  );
+};
 
 export default TreeCard;
