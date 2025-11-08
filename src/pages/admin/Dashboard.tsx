@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, Plus, ListFilter, ChevronDown, UploadCloud, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { Search, Plus, ListFilter, ChevronDown, UploadCloud, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Tree } from '../../types/tree';
 import { supabase } from '../../lib/supabase';
@@ -149,6 +150,143 @@ const Dashboard = () => {
 
   const hasActiveFilters =
     statusFilter !== 'all' || createdFilter !== 'all' || sort !== 'name-asc';
+  const isDesktop = useMediaQuery('(min-width: 640px)');
+  useBodyScrollLock(!isDesktop && (addMenuOpen || filterMenuOpen));
+
+  const closeFilterMenu = () => setFilterMenuOpen(false);
+  const closeAddMenu = () => setAddMenuOpen(false);
+  const resetFilters = () => {
+    setStatusFilter('all');
+    setCreatedFilter('all');
+    setSort('name-asc');
+  };
+
+  const renderFilterFields = () => (
+    <div className="space-y-4 text-xs font-semibold text-gray-500">
+      <div>
+        <p>Status</p>
+        <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+          {statusOptions.map((option) => (
+            <button
+              type="button"
+              key={option.value}
+              onClick={() => setStatusFilter(option.value)}
+              className={cn(
+                'rounded-md border px-3 py-1.5 font-semibold',
+                statusFilter === option.value
+                  ? 'border-transparent bg-brand-100 text-brand-700'
+                  : 'border-gray-200 text-gray-600'
+              )}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p>Dibuat</p>
+        <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+          {createdOptions.map((option) => (
+            <button
+              type="button"
+              key={option.value}
+              onClick={() => setCreatedFilter(option.value)}
+              className={cn(
+                'rounded-md border px-3 py-1.5 font-semibold',
+                createdFilter === option.value
+                  ? 'border-transparent bg-brand-100 text-brand-700'
+                  : 'border-gray-200 text-gray-600'
+              )}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p>Sort</p>
+        <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+          {sortOptions.map((option) => (
+            <button
+              type="button"
+              key={option.value}
+              onClick={() => setSort(option.value)}
+              className={cn(
+                'rounded-md border px-3 py-1.5 font-semibold',
+                sort === option.value
+                  ? 'border-transparent bg-brand-100 text-brand-700'
+                  : 'border-gray-200 text-gray-600'
+              )}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderFilterActions = (className?: string) => (
+    <div className={cn('flex gap-2', className)}>
+      <Button
+        size="sm"
+        variant="outline"
+        className="flex-1"
+        onClick={() => {
+          resetFilters();
+          closeFilterMenu();
+        }}
+      >
+        Reset
+      </Button>
+      <Button size="sm" className="flex-1" onClick={closeFilterMenu}>
+        Apply
+      </Button>
+    </div>
+  );
+
+  const renderAddMenuContent = (variant: 'mobile' | 'desktop') => {
+    const isMobileVariant = variant === 'mobile';
+    const actionClasses = isMobileVariant
+      ? 'rounded-2xl border border-gray-200 px-3 py-3 text-sm font-semibold text-gray-800 hover:border-brand-300 hover:bg-brand-50'
+      : 'rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-brand-50';
+    const baseClasses = 'flex w-full items-center gap-2 transition';
+
+    return (
+      <div className="space-y-2">
+        <button
+          type="button"
+          onClick={() => {
+            handleAddTree();
+            closeAddMenu();
+          }}
+          className={cn(baseClasses, actionClasses)}
+        >
+          <Plus className="h-4 w-4" />
+          Tambah Pohon
+        </button>
+
+        <label className={cn('cursor-pointer', baseClasses, actionClasses)}>
+          <UploadCloud className="h-4 w-4" />
+          Impor CSV
+          <input
+            type="file"
+            accept=".csv"
+            className="hidden"
+            onChange={(event) => {
+              if (event.target.files?.length) {
+                console.info('Import CSV', event.target.files[0]);
+                event.target.value = '';
+              }
+              closeAddMenu();
+            }}
+          />
+        </label>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-geist-50 pb-28 sm:pb-10">
@@ -200,97 +338,22 @@ const Dashboard = () => {
                   {hasActiveFilters && <span className="h-2 w-2 rounded-full bg-brand-500" />}
                 </Button>
 
-                {filterMenuOpen && (
-                  <div className="absolute right-0 top-12 z-40 w-72 space-y-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-xl">
-                    <div className="space-y-2 text-xs font-semibold text-gray-500">
-                      <div>
-                        <p>Status</p>
-                        <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
-                          {statusOptions.map((option) => (
-                            <button
-                              type="button"
-                              key={option.value}
-                              onClick={() => setStatusFilter(option.value)}
-                              className={cn(
-                                'rounded-md border px-3 py-1.5 font-semibold',
-                                statusFilter === option.value
-                                  ? 'border-transparent bg-brand-100 text-brand-700'
-                                  : 'border-gray-200 text-gray-600'
-                              )}
-                            >
-                              {option.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <p>Dibuat</p>
-                        <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
-                          {createdOptions.map((option) => (
-                            <button
-                              type="button"
-                              key={option.value}
-                              onClick={() => setCreatedFilter(option.value)}
-                              className={cn(
-                                'rounded-md border px-3 py-1.5 font-semibold',
-                                createdFilter === option.value
-                                  ? 'border-transparent bg-brand-100 text-brand-700'
-                                  : 'border-gray-200 text-gray-600'
-                              )}
-                            >
-                              {option.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <p>Sort</p>
-                        <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
-                          {sortOptions.map((option) => (
-                            <button
-                              type="button"
-                              key={option.value}
-                              onClick={() => setSort(option.value)}
-                              className={cn(
-                                'rounded-md border px-3 py-1.5 font-semibold',
-                                sort === option.value
-                                  ? 'border-transparent bg-brand-100 text-brand-700'
-                                  : 'border-gray-200 text-gray-600'
-                              )}
-                            >
-                              {option.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+                {filterMenuOpen &&
+                  (isDesktop ? (
+                    <div className="absolute right-0 top-12 z-40 w-72 rounded-2xl border border-gray-200 bg-white p-4 shadow-xl">
+                      {renderFilterFields()}
+                      {renderFilterActions('mt-4')}
                     </div>
-
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-9 flex-1 py-1"
-                        onClick={() => {
-                          setStatusFilter('all');
-                          setCreatedFilter('all');
-                          setSort('name-asc');
-                          setFilterMenuOpen(false);
-                        }}
-                      >
-                        Reset
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="h-9 flex-1 py-1"
-                        onClick={() => setFilterMenuOpen(false)}
-                      >
-                        Apply
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                  ) : (
+                    <MobileSheet
+                      onClose={closeFilterMenu}
+                      title="Filter Data"
+                      description="Sesuaikan tampilan daftar pohon"
+                      footer={renderFilterActions('mt-5 border-t border-gray-100 pt-4')}
+                    >
+                      {renderFilterFields()}
+                    </MobileSheet>
+                  ))}
               </div>
 
               {/* Add New */}
@@ -307,38 +370,21 @@ const Dashboard = () => {
                   <Plus strokeWidth={2} className="h-4 w-4 inline sm:hidden" />
                 </Button>
 
-                {addMenuOpen && (
-                  <div className="absolute right-0 top-12 z-40 w-56 rounded-xl border border-gray-200 bg-white p-2 shadow-xl">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleAddTree();
-                        setAddMenuOpen(false);
-                      }}
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-brand-50"
+                {addMenuOpen &&
+                  (isDesktop ? (
+                    <div className="absolute right-0 top-12 z-40 w-56 rounded-xl border border-gray-200 bg-white p-2 shadow-xl">
+                      {renderAddMenuContent('desktop')}
+                    </div>
+                  ) : (
+                    <MobileSheet
+                      onClose={closeAddMenu}
+                      title="Tambah Data"
+                      description="Pilih aksi yang ingin dilakukan"
+                      className="max-h-[60vh]"
                     >
-                      <Plus className="h-4 w-4" />
-                      Tambah Pohon
-                    </button>
-
-                    <label className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-brand-50">
-                      <UploadCloud className="h-4 w-4" />
-                      Impor CSV
-                      <input
-                        type="file"
-                        accept=".csv"
-                        className="hidden"
-                        onChange={(event) => {
-                          if (event.target.files?.length) {
-                            console.info('Import CSV', event.target.files[0]);
-                            event.target.value = '';
-                          }
-                          setAddMenuOpen(false);
-                        }}
-                      />
-                    </label>
-                  </div>
-                )}
+                      {renderAddMenuContent('mobile')}
+                    </MobileSheet>
+                  ))}
               </div>
             </div>
           </section>
@@ -469,3 +515,73 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+const useMediaQuery = (query: string) => {
+  const [matches, setMatches] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia(query).matches;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const mediaQuery = window.matchMedia(query);
+    const handler = (event: MediaQueryListEvent) => setMatches(event.matches);
+    setMatches(mediaQuery.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, [query]);
+
+  return matches;
+};
+
+const useBodyScrollLock = (active: boolean) => {
+  useEffect(() => {
+    if (!active || typeof document === 'undefined') return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [active]);
+};
+
+type MobileSheetProps = {
+  onClose: () => void;
+  title: string;
+  description?: string;
+  children: ReactNode;
+  footer?: ReactNode;
+  className?: string;
+};
+
+const MobileSheet = ({ onClose, title, description, children, footer, className }: MobileSheetProps) => (
+  <>
+    <div
+      className="fixed inset-0 z-30 bg-gray-900/40 backdrop-blur-[1px]"
+      onClick={onClose}
+    />
+    <div
+      className={cn(
+        'fixed inset-x-0 bottom-0 z-40 max-h-[80vh] overflow-y-auto rounded-t-3xl border border-gray-200 bg-white p-5 shadow-[0_-20px_45px_rgba(15,23,42,0.25)]',
+        className
+      )}
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <p className="text-sm font-semibold text-gray-900">{title}</p>
+          {description && <p className="text-xs text-gray-500">{description}</p>}
+        </div>
+        <button
+          type="button"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500"
+          onClick={onClose}
+          aria-label={`Tutup ${title}`}
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+      {children}
+      {footer}
+    </div>
+  </>
+);
