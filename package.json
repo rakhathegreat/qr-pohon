@@ -42,7 +42,7 @@
     "typescript-eslint": "^8.39.1",
     "vite": "^7.1.2"
   },
-  "description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
+  "description": "QR Pohon admin and user experience for managing and scanning tree data.",
   "main": "eslint.config.js",
   "keywords": [],
   "author": "",
