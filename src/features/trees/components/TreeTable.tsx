@@ -19,7 +19,7 @@ type TreeTableProps = {
   className?: string;
 };
 
-const truncateId = (id: string) => `${id.slice(0, 6)}…${id.slice(-4)}`;
+const truncateId = (id: string) => `${id.slice(0, 6)}...${id.slice(-4)}`;
 
 const formatDate = (value?: string | null) => {
   if (!value) return '-';
@@ -123,7 +123,7 @@ const TreeTable = ({
                 className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
                 <QrCode className="h-4 w-4" />
-                Lihat QR
+                View QR
               </button>
             )}
             <button
@@ -146,7 +146,7 @@ const TreeTable = ({
               className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm text-red-600 hover:bg-red-50"
             >
               <Trash2 className="h-4 w-4" />
-              Hapus
+              Delete
             </button>
           </div>
         )}
@@ -293,7 +293,7 @@ const TreeTable = ({
                       )}
                     >
                       <Trash2 className="h-4 w-4" />
-                      Hapus Terpilih
+                      Delete Selected
                     </button>
                   </div>
                 )}

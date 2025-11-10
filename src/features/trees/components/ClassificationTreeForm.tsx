@@ -15,8 +15,6 @@ const taxonomyFields: Array<keyof TreeFormValues['taxonomy']> = [
   'species',
 ];
 
-const fieldSurfaceClass =
-  'rounded-2xl border-gray-200 bg-white/80 shadow-inner focus-visible:border-brand-500 focus-visible:ring-brand-200';
 
 const cloneValues = (values: TreeFormValues): TreeFormValues => ({
   ...values,
@@ -106,13 +104,13 @@ const ClassificationTreeForm = ({
     <form onSubmit={handleSubmit} className="space-y-6">
       <FormSection
         badge="STEP 01"
-        title="Informasi Dasar"
-        description="Berikan identitas awal yang membantu tim mengenali pohon."
+        title="Basic Information"
+        description="Provide the initial identity so the team can recognize the tree quickly."
       >
         <div className="grid gap-4 md:grid-cols-2">
           <Input
             label="Common Name"
-            placeholder="Nama umum pohon"
+            placeholder="Tree common name"
             required
             value={values.common_name}
             onValueChange={(val) => setValues((prev) => ({ ...prev, common_name: val }))}
@@ -120,7 +118,7 @@ const ClassificationTreeForm = ({
           />
           <Input
             label="Scientific Name"
-            placeholder="Nama ilmiah"
+            placeholder="Scientific name"
             required
             value={values.scientific_name}
             onValueChange={(val) => setValues((prev) => ({ ...prev, scientific_name: val }))}
@@ -131,15 +129,15 @@ const ClassificationTreeForm = ({
 
       <FormSection
         badge="STEP 02"
-        title="Struktur Taksonomi"
-        description="Isi seluruh jenjang klasifikasi."
+        title="Taxonomy Structure"
+        description="Fill every taxonomy rank completely."
       >
         <div className="grid gap-4 md:grid-cols-2">
           {taxonomyFields.map((field) => (
             <Input
               key={field}
               label={field.charAt(0).toUpperCase() + field.slice(1)}
-              placeholder="Isi data"
+              placeholder="Enter value"
               required
               value={values.taxonomy[field]}
               onValueChange={(val) => setTaxonomy(field, val)}
@@ -151,13 +149,13 @@ const ClassificationTreeForm = ({
 
       <FormSection
         badge="STEP 03"
-        title="Asal dan Sebaran"
-        description="Data ini membantu tim memahami konteks ekologi pohon."
+        title="Origin & Distribution"
+        description="This data helps the team understand the ecological context."
       >
         <div className="grid gap-4 md:grid-cols-3">
           <Input
             label="Region"
-            placeholder="Contoh: Jawa Barat"
+            placeholder="Example: West Java"
             required
             value={values.endemic.region}
             onValueChange={(val) =>
@@ -169,7 +167,7 @@ const ClassificationTreeForm = ({
             <label className="text-sm font-semibold text-gray-700">Countries</label>
             <textarea
               rows={4}
-              placeholder="Pisahkan dengan koma"
+              placeholder="Separate with commas"
               className={textareaBase}
               value={values.endemic.countries.join(', ')}
               onChange={(event) => setEndemicArray('countries', event.target.value)}
@@ -179,7 +177,7 @@ const ClassificationTreeForm = ({
             <label className="text-sm font-semibold text-gray-700">Provinces</label>
             <textarea
               rows={4}
-              placeholder="Pisahkan dengan koma"
+              placeholder="Separate with commas"
               className={textareaBase}
               value={values.endemic.provinces.join(', ')}
               onChange={(event) => setEndemicArray('provinces', event.target.value)}
@@ -190,14 +188,14 @@ const ClassificationTreeForm = ({
 
       <FormSection
         badge="STEP 04"
-        title="Deskripsi & Karakteristik"
-        description="Tambahkan detail naratif dan poin penting tentang pohon."
+        title="Description & Characteristics"
+        description="Add the narrative details and highlight key characteristics."
       >
         <div className="space-y-2">
           <label className="text-sm font-semibold text-gray-700">Description</label>
           <textarea
             rows={5}
-            placeholder="Tuliskan ringkasan mengenai pohon..."
+            placeholder="Write a short summary about this tree..."
             className={textareaBase}
             value={values.description}
             onChange={(event) =>
@@ -210,7 +208,7 @@ const ClassificationTreeForm = ({
           <p className="text-sm font-semibold text-gray-700">Characteristics</p>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Input
-              placeholder="Contoh: Tinggi 30 meter"
+              placeholder="Example: Grows up to 30 meters"
               value={characteristicInput}
               onValueChange={setCharacteristicInput}
               
@@ -234,7 +232,7 @@ const ClassificationTreeForm = ({
           </div>
 
           {values.characteristics.length === 0 ? (
-            <p className="text-sm text-gray-500">Belum ada karakteristik yang ditambahkan.</p>
+            <p className="text-sm text-gray-500">No characteristics added yet.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {values.characteristics.map((characteristic, index) => (
@@ -247,7 +245,7 @@ const ClassificationTreeForm = ({
                     type="button"
                     onClick={() => handleCharacteristicRemove(index)}
                     className="text-gray-400 transition hover:text-gray-700"
-                    aria-label={`Hapus karakteristik ${characteristic}`}
+                    aria-label={`Remove characteristic ${characteristic}`}
                   >
                     <X className="h-4 w-4" />
                   </button>

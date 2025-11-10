@@ -19,7 +19,7 @@ export default function Register() {
   async function handleRegister(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!password || password !== confirmPassword) {
-      alert('Konfirmasi kata sandi harus sama.')
+      alert('Password confirmation must match.')
       return
     }
 
@@ -39,7 +39,7 @@ export default function Register() {
       return
     }
 
-    alert('Registrasi berhasil! Silakan cek email Anda untuk verifikasi.')
+    alert('Registration successful! Please check your email for verification.')
     nav('/login')
   }
 
@@ -134,7 +134,7 @@ export default function Register() {
               </div>
 
               <Button type="submit" disabled={loading} size="full" className='text-[16px] font-normal'>
-                {loading ? 'Memproses…' : 'Sign up'}
+                {loading ? 'Processing...' : 'Sign up'}
               </Button>
             </form>
 
@@ -153,7 +153,7 @@ export default function Register() {
                   })
                 }
                 className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white py-3 text-[16px] font-normal text-gray-900 hover:border-brand-200 hover:bg-brand-50 hover:cursor-pointer"
-                aria-label="Registrasi dengan Google"
+                aria-label="Sign up with Google"
               >
                 <FcGoogle className="text-2xl" />
                 Sign up with Google

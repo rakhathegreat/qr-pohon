@@ -23,7 +23,7 @@ export default function AdminLogin() {
       .single()
 
     if (error) {
-      console.error("Gagal ambil role:", error.message)
+      console.error("Failed to fetch role:", error.message)
       nav("/main") // fallback
       return
     }
@@ -95,7 +95,7 @@ export default function AdminLogin() {
               </div>
 
               <Button type="submit" disabled={loading} size="full" className="text-[16px] font-normal active:scale-[0.98]">
-                {loading ? 'Processing…' : 'Sign in'}
+                {loading ? 'Processing...' : 'Sign in'}
               </Button>
             </form>
 

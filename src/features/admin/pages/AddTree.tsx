@@ -14,7 +14,7 @@ const AddTree = () => {
   const handleSubmit = async (values: TreeFormValues) => {
     const locationName = values.coordinates.location?.toString().trim();
     if (!locationName) {
-      alert('Lokasi harus diisi sebelum menyimpan.');
+      alert('Location is required before saving.');
       return;
     }
 
@@ -27,7 +27,7 @@ const AddTree = () => {
         .maybeSingle();
 
       if (jenisPohonError || !jenisPohon) {
-        throw new Error('Jenis pohon tidak ditemukan di katalog. Pilih nama yang tersedia.');
+        throw new Error('Tree is not listed in the catalog. Please choose an available name.');
       }
 
       let lokasiId: number | null = null;
@@ -51,7 +51,7 @@ const AddTree = () => {
           .single();
 
         if (insertLokasiError || !insertedLokasi) {
-          throw new Error(insertLokasiError?.message ?? 'Gagal menambahkan lokasi baru.');
+          throw new Error(insertLokasiError?.message ?? 'Failed to add a new location.');
         }
 
         lokasiId = insertedLokasi.id;
@@ -78,7 +78,7 @@ const AddTree = () => {
 
       navigate('/admin/dashboard');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Gagal menyimpan data pohon.';
+      const message = error instanceof Error ? error.message : 'Failed to save tree data.';
       alert(message);
     } finally {
       setIsSubmitting(false);

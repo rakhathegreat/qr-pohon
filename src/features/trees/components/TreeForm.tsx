@@ -272,7 +272,7 @@ const TreeForm = ({
 
     setTemplateHydrating(false);
     if (error || !data) {
-      setTemplateHydrateError('Gagal mengisi otomatis. Lengkapi data manual.');
+      setTemplateHydrateError('Auto-fill failed. Please complete the form manually.');
       return;
     }
 
@@ -319,7 +319,7 @@ const TreeForm = ({
 
       setNameLoading(false);
       if (error) {
-        setNameError('Gagal memuat saran');
+        setNameError('Failed to load suggestions');
         setNameSuggestions([]);
         setShowNameSuggestions(true);
         return;
@@ -395,7 +395,7 @@ const TreeForm = ({
 
       setLocationLoading(false);
       if (error) {
-        setLocationError('Gagal memuat saran lokasi');
+        setLocationError('Failed to load location suggestions');
         setLocationSuggestions([]);
         setShowLocationSuggestions(true);
         return;
@@ -436,8 +436,8 @@ const TreeForm = ({
     <form onSubmit={handleSubmit} className="space-y-6">
       <FormSection
         badge="STEP 01"
-        title="Informasi Dasar"
-        description="Berikan identitas awal yang membantu tim mengenali pohon."
+        title="Basic Information"
+        description="Provide the initial identity so the team can recognize the tree quickly."
       >
         <div className="grid gap-4 md:grid-cols-2">
           <Input
@@ -460,7 +460,7 @@ const TreeForm = ({
           <div className="relative" ref={nameSuggestionsRef}>
             <Input
               label="Common Name"
-              placeholder="Nama umum pohon"
+              placeholder="Tree common name"
               required
               value={values.common_name}
               ref={nameInputRef}
@@ -477,17 +477,17 @@ const TreeForm = ({
             {showNameSuggestions && !fieldDisabled && (
               <div className="absolute left-0 right-0 z-20 mt-2 max-h-60 overflow-y-auto p-1 rounded-lg border border-gray-200 bg-white shadow-xl">
                 <span className="text-xs text-brand-700 px-4 font-medium">
-                  {hasMinCommonNameQuery ? 'Hasil Pencarian' : 'Saran Terbaru'}
+                  {hasMinCommonNameQuery ? 'Search Results' : 'Recent Suggestions'}
                 </span>
                 {nameSuggestionsLoading ? (
-                  <p className="px-4 py-3 text-sm text-gray-500">Mengambil saran...</p>
+                  <p className="px-4 py-3 text-sm text-gray-500">Fetching suggestions...</p>
                 ) : nameError ? (
                   <p className="px-4 py-3 text-sm text-red-600">{nameError}</p>
                 ) : nameSuggestions.length === 0 ? (
                   <p className="px-4 py-3 text-sm text-gray-500">
                     {hasMinCommonNameQuery
-                      ? 'Tidak ada saran yang cocok.'
-                      : `Ketik minimal ${COMMON_NAME_MIN_QUERY} huruf untuk melihat saran.`}
+                      ? 'No matching suggestions.'
+                      : `Type at least ${COMMON_NAME_MIN_QUERY} letters to see suggestions.`}
                   </p>
                 ) : (
                   nameSuggestions.map((suggestion) => (
@@ -504,20 +504,20 @@ const TreeForm = ({
               </div>
             )}
             {templateHydrating && (
-              <p className="mt-2 text-xs font-semibold text-brand-700">Mengisi data otomatis…</p>
+              <p className="mt-2 text-xs font-semibold text-brand-700">Applying catalog template...</p>
             )}
             {templateHydrateError && !templateHydrating && (
               <p className="mt-2 text-xs text-red-600">{templateHydrateError}</p>
             )}
             {templateHydratedFrom && !templateHydrating && !templateHydrateError && (
               <p className="mt-2 text-xs text-brand-700">
-                Data terisi otomatis dari katalog {templateHydratedFrom}.
+                Prefilled from catalog {templateHydratedFrom}.
               </p>
             )}
           </div>
           <Input
             label="Scientific Name"
-            placeholder="Nama ilmiah"
+            placeholder="Scientific name"
             required
             disabled
             value={values.scientific_name}
@@ -529,8 +529,8 @@ const TreeForm = ({
 
       <FormSection
         badge="STEP 02"
-        title="Struktur Taksonomi"
-        description="Isi seluruh jenjang klasifikasi."
+        title="Taxonomy Structure"
+        description="Fill every taxonomy rank completely."
       >
         <div className="grid gap-4 md:grid-cols-2">
           {taxonomyFields.map((field) => (
@@ -551,13 +551,13 @@ const TreeForm = ({
 
       <FormSection
         badge="STEP 03"
-        title="Asal dan Sebaran"
-        description="Data ini membantu tim memahami konteks ekologi pohon."
+        title="Origin & Distribution"
+        description="This data helps the team understand the ecological context."
       >
         <div className="grid gap-4 md:grid-cols-3">
           <Input
             label="Region"
-            placeholder="Contoh: Jawa Barat"
+            placeholder="Example: West Java"
             required
             value={values.endemic.region}
             disabled
@@ -568,8 +568,8 @@ const TreeForm = ({
           />
           <TextAreaField
             label="Countries"
-            placeholder="Pisahkan dengan koma"
-            helperText="Contoh: Indonesia, Malaysia"
+            placeholder="Separate with commas"
+            helperText="Example: Indonesia, Malaysia"
             value={values.endemic.countries.join(', ')}
             disabled
             onChange={(val) => setEndemicArray('countries', val)}
@@ -577,7 +577,7 @@ const TreeForm = ({
           />
           <TextAreaField
             label="Provinces"
-            placeholder="Pisahkan dengan koma"
+            placeholder="Separate with commas"
             value={values.endemic.provinces.join(', ')}
             disabled
             onChange={(val) => setEndemicArray('provinces', val)}
@@ -589,8 +589,8 @@ const TreeForm = ({
       {!isClassificationMode && (
         <FormSection
           badge="STEP 04"
-          title="Koordinat Lapangan"
-          description="Pastikan angka lat/long sesuai format desimal."
+          title="Field Coordinates"
+          description="Ensure the latitude/longitude values use decimal format."
         >
           <div className="grid gap-4 md:grid-cols-3">
             <Input
@@ -613,8 +613,8 @@ const TreeForm = ({
             />
             <div className="relative" ref={locationSuggestionsRef}>
               <Input
-                label="Lokasi"
-                placeholder="Nama lokasi"
+                label="Location"
+                placeholder="Location name"
                 required
                 value={values.coordinates.location?.toString() ?? ''}
                 disabled={fieldDisabled}
@@ -642,12 +642,12 @@ const TreeForm = ({
                   <p className="px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-brand-700">
                     {values.coordinates.location && typeof values.coordinates.location === 'string'
                       ? values.coordinates.location.trim().length >= LOCATION_MIN_QUERY
-                        ? 'Hasil Pencarian Lokasi'
-                        : 'Lokasi Terbaru'
+                        ? 'Location Search Results'
+                        : 'Recent Locations'
                       : ''}
                   </p>
                   {locationLoading ? (
-                    <p className="px-4 py-3 text-sm text-gray-500">Mengambil saran lokasi…</p>
+                    <p className="px-4 py-3 text-sm text-gray-500">Fetching location suggestions...</p>
                   ) : locationError ? (
                     <p className="px-4 py-3 text-sm text-red-600">{locationError}</p>
                   ) : locationSuggestions.length === 0 ? (
@@ -655,8 +655,8 @@ const TreeForm = ({
                       {values.coordinates.location &&
                       typeof values.coordinates.location === 'string' &&
                       values.coordinates.location.trim().length >= LOCATION_MIN_QUERY
-                        ? 'Tidak ada lokasi yang cocok.'
-                        : `Ketik minimal ${LOCATION_MIN_QUERY} huruf untuk melihat saran.`}
+                        ? 'No matching locations.'
+                        : `Type at least ${LOCATION_MIN_QUERY} letters to see suggestions.`}
                     </p>
                   ) : (
                     locationSuggestions.map((suggestion) => (
@@ -668,7 +668,7 @@ const TreeForm = ({
                         onClick={() => handleLocationSuggestionSelect(suggestion)}
                       >
                         {suggestion}
-                        <span className="text-[11px] font-semibold uppercase text-brand-600">Pilih</span>
+                        <span className="text-[11px] font-semibold uppercase text-brand-600">Select</span>
                       </button>
                     ))
                   )}
@@ -684,12 +684,12 @@ const TreeForm = ({
 
       <FormSection
         badge="STEP 05"
-        title="Deskripsi & Karakteristik"
-        description="Tambahkan detail naratif dan poin penting tentang pohon."
+        title="Description & Characteristics"
+        description="Add the narrative details and highlight key characteristics."
       >
         <TextAreaField
           label="Description"
-          placeholder="Tuliskan ringkasan mengenai pohon..."
+          placeholder="Write a short summary about this tree..."
           value={values.description}
           disabled
           onChange={(val) => setValues((prev) => ({ ...prev, description: val }))}
@@ -700,7 +700,7 @@ const TreeForm = ({
           <p className="text-sm font-semibold text-gray-700">Characteristics</p>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Input
-              placeholder="Contoh: Tinggi 30 meter"
+              placeholder="Example: Grows up to 30 meters"
               value={characteristicInput}
               disabled
               onValueChange={setCharacteristicInput}
@@ -725,7 +725,7 @@ const TreeForm = ({
           </div>
 
           {values.characteristics.length === 0 ? (
-            <p className="text-sm text-gray-500">Belum ada karakteristik yang ditambahkan.</p>
+            <p className="text-sm text-gray-500">No characteristics added yet.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {values.characteristics.map((characteristic, index) => (
@@ -739,7 +739,7 @@ const TreeForm = ({
                     onClick={() => handleCharacteristicRemove(index)}
                     disabled
                     className="text-gray-400 transition hover:text-gray-700 disabled:opacity-40"
-                    aria-label={`Hapus karakteristik ${characteristic}`}
+                    aria-label={`Remove characteristic ${characteristic}`}
                   >
                     <X className="h-4 w-4" />
                   </button>

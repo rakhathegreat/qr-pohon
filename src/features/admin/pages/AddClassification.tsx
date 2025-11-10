@@ -28,7 +28,7 @@ const AddClassification = () => {
 
       navigate('/admin/dashboard');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Gagal menyimpan data klasifikasi.';
+      const message = error instanceof Error ? error.message : 'Failed to save classification data.';
       alert(message);
     } finally {
       setIsSubmitting(false);

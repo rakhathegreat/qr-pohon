@@ -16,13 +16,17 @@ import {
 import { cn } from '@shared/lib/cn';
 import { supabase } from '@shared/services/supabase';
 
+const profileLinks = [
+  { to: '/admin/logout', label: 'Logout', icon: LogOut },
+];
+
 const links = [
   { to: '/admin/dashboard', label: 'Tree Management', icon: TreePine },
-  { to: '/admin/users', label: 'Pengguna', icon: Users },
-  { to: '/admin/game-rules', label: 'Aturan Game', icon: Gamepad2 },
+  { to: '/admin/users', label: 'Users', icon: Users },
+  { to: '/admin/game-rules', label: 'Game Rules', icon: Gamepad2 },
   { to: '/admin/anti-cheat', label: 'Anti-Cheat', icon: ShieldCheck },
-  { to: '/admin/moderation', label: 'Moderasi', icon: Gavel },
-  { to: '/admin/analytics', label: 'Dashboard', icon: BarChart3 },
+  { to: '/admin/moderation', label: 'Moderation', icon: Gavel },
+  { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { to: '/admin/audit-log', label: 'Audit Log', icon: FileText },
 ];
 
@@ -121,17 +125,13 @@ const AdminNavbar = () => {
     };
   }, []);
 
-    const handleLogout = async () => {
-    // 1. hapus session Supabase
-    await supabase.auth.signOut()
-
-    // 2. bersihkan localStorage
-    localStorage.removeItem("token")
-    localStorage.removeItem("scanCount")
-
-    // 3. arahkan ke login
-    window.location.href = "/login/admin"
-  }
+  const handleLogout = async () => {
+    // Clear Supabase session then local storage, finally redirect to login.
+    await supabase.auth.signOut();
+    localStorage.removeItem('token');
+    localStorage.removeItem('scanCount');
+    window.location.href = '/login/admin';
+  };
 
   return (
     <>
@@ -180,10 +180,10 @@ const AdminNavbar = () => {
               <div className='absolute right-0 top-11 z-30 w-64 rounded-xl border border-gray-300 bg-white shadow-xl'>
                 <div className='flex flex-col font-medium text-sm px-5 py-2 mt-2'>
                   <span className='whitespace-nowrap text-gray-900'>
-                    {profileLoading ? 'Memuat...' : profile.name || 'Pengguna'}
+                    {profileLoading ? 'Loading...' : profile.name || 'User'}
                   </span>
                   <span className='whitespace-nowrap text-gray-500'>
-                    {profile.email || (profileLoading ? '' : 'Email tidak tersedia')}
+                    {profile.email || (profileLoading ? '' : 'Email not available')}
                   </span>
                 </div>
                 <div className='flex flex-col px-2 mb-3'>
@@ -243,6 +243,26 @@ const AdminNavbar = () => {
                   {label}
                 </NavLink>
               ))}
+              <div className='border-t border-gray-300'>
+                {profileLinks.map(({ to, label, icon: Icon }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    onClick={() => setOpen(false)}
+                    className={({ isActive }) =>
+                      cn(
+                        'flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition',
+                        isActive
+                          ? 'border-brand-200 bg-brand-100 text-brand-700'
+                          : 'text-gray-500 hover:border-gray-300 hover:bg-gray-50'
+                      )
+                    }
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </NavLink>
+                ))}
+              </div>
             </nav>
           </div>
         </>

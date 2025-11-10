@@ -23,7 +23,7 @@ export default function Login() {
       .single()
 
     if (error) {
-      console.error("Gagal ambil role:", error.message)
+      console.error("Failed to fetch role:", error.message)
       nav("/main") // fallback
       return
     }
@@ -86,7 +86,7 @@ export default function Login() {
               <div className="flex flex-col gap-3">
                 <Input
                   id="user-password"
-                  label="Kata sandi"
+                  label="Password"
                   type="password"
                   placeholder="Enter your password"
                   value={password}
@@ -100,7 +100,7 @@ export default function Login() {
               </div>
 
               <Button type="submit" disabled={loading} size="full" className='text-[16px] font-normal'>
-                {loading ? 'Memproses…' : 'Log in'}
+                {loading ? 'Processing...' : 'Log in'}
               </Button>
             </form>
 
@@ -119,7 +119,7 @@ export default function Login() {
                   })
                 }
                 className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white py-3 text-[16px] font-normal text-gray-900 hover:border-brand-200 hover:bg-brand-50 hover:cursor-pointer"
-                aria-label="Login pengguna dengan Google"
+                aria-label="Log in with Google"
               >
                 <FcGoogle className="text-2xl" />
                 Log in with Google
@@ -141,7 +141,7 @@ export default function Login() {
         <section className="hidden relative lg:flex items-center justify-center overflow-hidden bg-brand-700 px-8 py-12 text-white">
           <img
             src={heroImage}
-            alt="Kanopi pohon"
+            alt="Tree canopy"
             className="absolute inset-0 h-full w-full object-cover opacity-20"
           />
           <div className="absolute inset-0 bg-gradient-to-br from-brand-800 via-brand-700 to-brand-600 opacity-95" />

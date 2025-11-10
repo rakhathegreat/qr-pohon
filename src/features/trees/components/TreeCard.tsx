@@ -69,11 +69,11 @@ const ActionButton = ({
 };
 
 const truncateId = (value: string) =>
-  value.length <= 12 ? value : `${value.slice(0, 6)}…${value.slice(-4)}`;
+  value.length <= 12 ? value : `${value.slice(0, 6)}...${value.slice(-4)}`;
 
 const formatCreatedDate = (value?: string | null) => {
   if (!value) return '-';
-  return new Date(value).toLocaleDateString('id-ID', {
+  return new Date(value).toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -143,17 +143,17 @@ const TreeCard = ({
 
       <div className="flex items-center justify-end gap-2">
         {isFieldMode && (
-          <ActionButton onClick={() => onViewQr(tree.id)} label="Lihat QR">
+          <ActionButton onClick={() => onViewQr(tree.id)} label="View QR">
             <QrCode className="h-4 w-4" />
           </ActionButton>
         )}
-        <ActionButton onClick={() => onEdit(tree.id)} label="Edit pohon">
+        <ActionButton onClick={() => onEdit(tree.id)} label="Edit tree">
           <SquarePen className="h-4 w-4" />
         </ActionButton>
         <ActionButton
           variant="danger"
           onClick={() => onDelete(tree.id)}
-          label="Hapus pohon"
+          label="Delete tree"
         >
           <Trash className="h-4 w-4" />
         </ActionButton>

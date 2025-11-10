@@ -17,9 +17,7 @@ export default function LocationCard({ location, onEdit, onDelete, className }: 
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-base font-medium text-gray-900">{location.lokasi}</p>
-          <p className="text-xs text-gray-500">
-            Ditambahkan {formatLocationDate(location.created_at)}
-          </p>
+          <p className="text-xs text-gray-500">Added {formatLocationDate(location.created_at)}</p>
         </div>
         <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-3 py-1 text-xs font-medium text-brand-700">
           <span className="text-xs text-brand-500">ID</span>

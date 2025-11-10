@@ -44,7 +44,7 @@ const LocationModal = ({ open, onClose, onSubmit, isSubmitting = false }: Locati
             type="button"
             onClick={onClose}
             className="rounded-full border border-gray-200 p-2 text-gray-500 hover:bg-gray-100 hover:cursor-pointer"
-            aria-label="Tutup"
+            aria-label="Close add location modal"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -53,7 +53,7 @@ const LocationModal = ({ open, onClose, onSubmit, isSubmitting = false }: Locati
         <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
           <Input
             label="Location"
-            placeholder="Contoh: Taman Kota Bandung"
+            placeholder="Example: Bandung City Park"
             value={value}
             onValueChange={setValue}
             disabled={isSubmitting}
@@ -73,7 +73,7 @@ const LocationModal = ({ open, onClose, onSubmit, isSubmitting = false }: Locati
               Cancel
             </Button>
             <Button type="submit" size="sm" className="w-full sm:w-40" disabled={isSubmitting || !value.trim()}>
-              {isSubmitting ? 'Menyimpan…' : 'Save'}
+              {isSubmitting ? 'Saving...' : 'Save'}
             </Button>
           </div>
         </form>

@@ -31,15 +31,15 @@ const limitOptions = [10, 20, 50, 100];
 const treeSortOptions = [
   { value: 'name-asc', label: 'Name A-Z' },
   { value: 'name-desc', label: 'Name Z-A' },
-  { value: 'recent', label: 'Terbaru' },
-  { value: 'oldest', label: 'Terlama' },
+  { value: 'recent', label: 'Newest' },
+  { value: 'oldest', label: 'Oldest' },
 ];
 
 const locationSortOptions = [
-  { value: 'lokasi-asc', label: 'Nama A-Z' },
-  { value: 'lokasi-desc', label: 'Nama Z-A' },
-  { value: 'recent', label: 'Terbaru' },
-  { value: 'oldest', label: 'Terlama' },
+  { value: 'lokasi-asc', label: 'Name A-Z' },
+  { value: 'lokasi-desc', label: 'Name Z-A' },
+  { value: 'recent', label: 'Newest' },
+  { value: 'oldest', label: 'Oldest' },
 ];
 
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -47,32 +47,32 @@ type CreatedFilter = 'all' | '7d' | '30d';
 type TableView = 'classification' | 'field' | 'locations';
 
 const statusOptions: Array<{ value: StatusFilter; label: string }> = [
-  { value: 'all', label: 'Semua' },
-  { value: 'active', label: 'Aktif' },
-  { value: 'inactive', label: 'Nonaktif' },
+  { value: 'all', label: 'All' },
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
 ];
 
 const createdOptions: Array<{ value: CreatedFilter; label: string }> = [
-  { value: 'all', label: 'Semua' },
-  { value: '7d', label: '7 Hari' },
-  { value: '30d', label: '30 Hari' },
+  { value: 'all', label: 'All' },
+  { value: '7d', label: 'Last 7 Days' },
+  { value: '30d', label: 'Last 30 Days' },
 ];
 
 const tableViewOptions: Array<{ value: TableView; label: string; description: string }> = [
   {
     value: 'classification',
     label: 'Tree Classification',
-    description: 'Detail taksonomi lengkap (family, genus, species)',
+    description: 'Complete taxonomy (family, genus, species)',
   },
   {
     value: 'field',
     label: 'Tree Data',
-    description: 'Data lokasi lapangan lengkap dengan QR code',
+    description: 'Field records complete with QR codes',
   },
   {
     value: 'locations',
     label: 'Locations',
-    description: 'Kelola daftar lokasi fisik untuk pohon lapangan',
+    description: 'Manage physical planting locations for field trees',
   },
 ];
 
@@ -417,7 +417,7 @@ const Dashboard = () => {
   const pageCount = useMemo(() => Math.max(1, Math.ceil(total / perPage)), [perPage, total]);
   const start = total === 0 ? 0 : (page - 1) * perPage + 1;
   const end = Math.min(page * perPage, total);
-  const summaryLabel = isLocationView ? 'lokasi' : 'pohon';
+  const summaryLabel = isLocationView ? 'locations' : 'trees';
 
   const handleAddLocation = async (name: string) => {
     const trimmed = name.trim();
@@ -428,7 +428,7 @@ const Dashboard = () => {
     setLocationSubmitting(false);
 
     if (error) {
-      alert(`Gagal menambah lokasi: ${error.message}`);
+      alert(`Failed to add location: ${error.message}`);
       return;
     }
 
@@ -437,30 +437,30 @@ const Dashboard = () => {
   };
 
   const handleEditLocation = async (row: LocationRow) => {
-    const name = window.prompt('Ubah nama lokasi', row.lokasi);
+    const name = window.prompt('Rename location', row.lokasi);
     if (!name || !name.trim() || name.trim() === row.lokasi) return;
     const { error } = await supabase.from('lokasi').update({ lokasi: name.trim() }).eq('id', row.id);
     if (error) {
-      alert(`Gagal memperbarui lokasi: ${error.message}`);
+      alert(`Failed to update location: ${error.message}`);
       return;
     }
     fetchTrees();
   };
 
   const handleDeleteLocation = async (id: number) => {
-    if (!window.confirm('Hapus lokasi ini? Data pohon yang terkait mungkin perlu diperbarui manual.')) {
+    if (!window.confirm('Delete this location? Related trees might need manual updates.')) {
       return;
     }
     const { error } = await supabase.from('lokasi').delete().eq('id', id);
     if (error) {
-      alert(`Gagal menghapus lokasi: ${error.message}`);
+      alert(`Failed to delete location: ${error.message}`);
       return;
     }
     fetchTrees();
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Hapus data ini?')) return;
+    if (!window.confirm('Delete this data?')) return;
     if (isLocationView) {
       await handleDeleteLocation(Number(id));
       return;
@@ -654,7 +654,7 @@ const Dashboard = () => {
             className={cn(baseClasses, actionClasses)}
           >
             <MapPin className="h-4 w-4" />
-            Tambah Lokasi
+            Add Location
           </button>
         </div>
       );
@@ -693,7 +693,7 @@ const Dashboard = () => {
 
         <label className={cn('cursor-pointer', baseClasses, actionClasses)}>
           <UploadCloud className="h-4 w-4" />
-          Impor CSV
+          Import CSV
           <input
             type="file"
             accept=".csv"
@@ -721,14 +721,14 @@ const Dashboard = () => {
     if (loading) {
       return (
         <div className="rounded-2xl border border-dashed border-brand-200 bg-white p-6 text-sm text-gray-500">
-          Memuat data…
+          Loading data...
         </div>
       );
     }
 
     if (isLocationView) {
       if (locations.length === 0) {
-        return renderEmptyState('Belum ada lokasi. Tambahkan lokasi baru untuk memetakan penanaman pohon.');
+        return renderEmptyState('No locations yet. Add a new location to map the planting sites.');
       }
 
       return (
@@ -755,7 +755,7 @@ const Dashboard = () => {
     }
 
     if (trees.length === 0) {
-      return renderEmptyState('No trees found. Coba ubah kata kunci atau tambah data baru.');
+      return renderEmptyState('No trees found. Try a different keyword or add new data.');
     }
 
     const treeMode = tableView === 'classification' ? 'classification' : 'field';
@@ -874,7 +874,7 @@ const Dashboard = () => {
                     <MobileSheet
                       onClose={closeFilterMenu}
                       title="Filter Data"
-                      description="Sesuaikan tampilan daftar pohon"
+                      description="Refine the tree list"
                       footer={renderFilterActions('mt-5 border-t border-gray-100 pt-4')}
                     >
                       {renderFilterFields()}
@@ -904,8 +904,8 @@ const Dashboard = () => {
                   ) : (
                     <MobileSheet
                       onClose={closeAddMenu}
-                      title="Tambah Data"
-                      description="Pilih aksi yang ingin dilakukan"
+                      title="Add Data"
+                      description="Choose the action you need"
                       className="max-h-[60vh]"
                     >
                       {renderAddMenuContent('mobile')}
@@ -923,9 +923,9 @@ const Dashboard = () => {
               <div className="flex gap-4 flex-row md:items-center justify-between">
                 {/* Summary: tampilkan mulai lg */}
                 <p className="hidden lg:inline text-sm font-normal text-gray-600">
-                  Menampilkan{' '}
+                  Showing{' '}
                   <span className="font-medium text-gray-900">{Math.min(start, total)}</span> -{' '}
-                  <span className="font-medium text-gray-900">{Math.min(end, total)}</span> dari{' '}
+                  <span className="font-medium text-gray-900">{Math.min(end, total)}</span> of{' '}
                   <span className="font-medium text-gray-900">{total}</span> {summaryLabel}
                 </p>
 
@@ -954,7 +954,7 @@ const Dashboard = () => {
                       className="h-9 w-20"
                       disabled={page === 1}
                       onClick={() => setPage((prev) => prev - 1)}
-                      aria-label="Halaman sebelumnya"
+                      aria-label="Previous page"
                     >
                       <div className="flex items-center gap-1">
                         <ChevronLeft strokeWidth={2.5} className="h-5 w-5" />
@@ -973,7 +973,7 @@ const Dashboard = () => {
                             'h-9 w-10 justify-center border border-brand-200'
                           )}
                           aria-current={n === page ? 'page' : undefined}
-                          aria-label={`Ke halaman ${n}`}
+                          aria-label={`Go to page ${n}`}
                         >
                           {n}
                         </button>
@@ -986,7 +986,7 @@ const Dashboard = () => {
                       className="h-9 w-20"
                       disabled={page === pageCount || total === 0}
                       onClick={() => setPage((prev) => prev + 1)}
-                      aria-label="Halaman berikutnya"
+                      aria-label="Next page"
                     >
                       <div className="flex items-center gap-1">
                         <span>Next</span>
@@ -1078,7 +1078,7 @@ const MobileSheet = ({ onClose, title, description, children, footer, className 
           type="button"
           className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500"
           onClick={onClose}
-          aria-label={`Tutup ${title}`}
+          aria-label={`Close ${title}`}
         >
           <X className="h-4 w-4" />
         </button>
