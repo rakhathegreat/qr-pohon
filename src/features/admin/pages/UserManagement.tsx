@@ -72,9 +72,9 @@ const statusLabels: Record<UserStatus, string> = {
   pending: 'Pending',
 };
 
-const statusBadgeVariant: Record<UserStatus, 'success' | 'danger' | 'secondary'> = {
+const statusBadgeVariant: Record<UserStatus, 'success' | 'destructive' | 'secondary'> = {
   active: 'success',
-  suspended: 'danger',
+  suspended: 'destructive',
   pending: 'secondary',
 };
 
@@ -287,7 +287,7 @@ const UserManagement = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <Badge variant={statusBadgeVariant[user.status]}>
+                        <Badge variant={statusBadgeVariant[user.status] || 'default'}>
                           {statusLabels[user.status]}
                         </Badge>
                       </td>
