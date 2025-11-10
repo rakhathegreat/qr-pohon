@@ -17,7 +17,7 @@ import { cn } from '@shared/lib/cn';
 import { supabase } from '@shared/services/supabase';
 
 const profileLinks = [
-  { to: '/admin/logout', label: 'Logout', icon: LogOut },
+  { to: '/', label: 'Logout', icon: LogOut },
 ];
 
 const links = [
@@ -248,7 +248,7 @@ const AdminNavbar = () => {
                   <NavLink
                     key={to}
                     to={to}
-                    onClick={() => setOpen(false)}
+                    onClick={handleLogout}
                     className={({ isActive }) =>
                       cn(
                         'flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition',
