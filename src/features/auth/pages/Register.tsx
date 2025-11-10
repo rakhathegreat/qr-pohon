@@ -6,8 +6,7 @@ import Input from '@shared/components/Input';
 import Button from '@shared/components/Button';
 import { supabase } from '@shared/services/supabase';
 
-import heroImage from '@assets/Register/2.jpg';
-import { ArrowLeft, Clover, QrCode, TreePine } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 export default function Register() {
   const nav = useNavigate()
@@ -49,7 +48,7 @@ export default function Register() {
       <div className="grid min-h-screen lg:grid-cols-2">
 
         <section className="hidden items-center justify-center bg-geist-50 p-4 lg:flex">
-          <div className="relative flex flex-col justify-center p-6 h-full w-full rounded-xl bg-gradient-to-br from-brand-800 via-brand-700 to-brand-600">
+          <div className="relative flex flex-col justify-center p-10 h-full w-full rounded-xl bg-gradient-to-br from-brand-800 via-brand-700 to-brand-600">
             {/* <img src={heroImage} alt="" className='w-full h-full object-cover rounded-lg'/> */}
 
             <div className="absolute top-5 left-5">
@@ -75,10 +74,13 @@ export default function Register() {
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.45em] text-white/70">What Are You Waiting For?</p>
                 <h2 className="mt-3 text-4xl font-semibold leading-snug">
-                  Discover nearby trees, reveal species details, complete learning challenges, and grow your streak!
+                  Sign Up Now and 
+                </h2>
+                <h2 className="text-4xl font-semibold leading-snug">
+                  Start Your Discovery.
                 </h2>
                 <p className="mt-4 text-base text-white/80">
-                  Don't just walk past them, scan the QR and let each tree tell its story.
+                  Register today and turn every walk into an engaging learning session!
                 </p>
               </div>
             </div>
@@ -92,7 +94,7 @@ export default function Register() {
             <div className="space-y-4 lg:space-y-3 mb-10">
               <div className="flex flex-col gap-2">
                 <h1 className="text-3xl font-medium tracking-tight text-brand-800">Create Your Account</h1>
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                <p></p>
               </div>
             </div>
 
@@ -159,7 +161,7 @@ export default function Register() {
             </div>
 
             <div className="flex justify-center lg:hidden">
-              <div className="rounded-2xl bg-white py-2 text-sm text-gray-600">
+              <div className="rounded-2xl py-2 text-sm text-gray-600">
                 Already have an account?{' '}
                 <Link to="/login" className="font-medium text-brand-700 hover:underline">
                   Log in

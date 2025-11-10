@@ -1,15 +1,15 @@
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { FcGoogle } from 'react-icons/fc';
-import { Link, useNavigate } from 'react-router-dom';
+import {  useNavigate } from 'react-router-dom';
 
 import Input from '@shared/components/Input';
 import Button from '@shared/components/Button';
 import { supabase } from '@shared/services/supabase';
 
-import heroImage from '@assets/tree2.jpg';
+import heroImage from '@assets/Register/2.jpg';
 import { Clover, QrCode, TreePine } from 'lucide-react';
 
-export default function Login() {
+export default function AdminLogin() {
   const nav = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -67,47 +67,42 @@ export default function Login() {
           <div className="w-full max-w-md space-y-5 lg:space-y-4">
             <div className="space-y-4 lg:space-y-3">
               <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-medium tracking-tight text-brand-800">Welcome Back!</h1>
-                <p className="text-md tracking-tight w-86 text-gray-600">
-                  Sign in to explore nearby trees and start scan, learn, and grow your streak!
+                <h1 className="text-3xl font-medium tracking-tight text-brand-800">Admin Dashboard</h1>
+                <p className="text-base text-gray-600">
+                  Sign in to have access to the admin dashboard.
                 </p>
               </div>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-6">
               <Input
-                id="user-email"
-                label="Email"
+                id="admin-email"
+                label="Admin Email"
                 type="email"
-                placeholder="Enter your email"
+                placeholder="admin@qrpohon.id"
                 value={email}
                 onValueChange={setEmail}
               />
               <div className="flex flex-col gap-3">
                 <Input
-                  id="user-password"
-                  label="Kata sandi"
+                  id="admin-password"
+                  label="Password"
                   type="password"
                   placeholder="Enter your password"
                   value={password}
                   onValueChange={setPassword}
                 />
-                <div className='flex justify-end'>
-                  <a href="#" className="font-semibold text-xs text-brand-700 hover:underline">
-                    Forgot password?
-                  </a>
-                </div>
               </div>
 
-              <Button type="submit" disabled={loading} size="full" className='text-[16px] font-normal'>
-                {loading ? 'Memproses…' : 'Log in'}
+              <Button type="submit" disabled={loading} size="full" className="text-[16px] font-normal active:scale-[0.98]">
+                {loading ? 'Processing…' : 'Sign in'}
               </Button>
             </form>
 
             <div className="space-y-4">
               <div className="flex items-center gap-3 text-xs font-semibold text-gray-400">
                 <span className="h-px flex-1 bg-gray-200" />
-                Or
+                or
                 <span className="h-px flex-1 bg-gray-200" />
               </div>
               <button
@@ -119,20 +114,11 @@ export default function Login() {
                   })
                 }
                 className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white py-3 text-[16px] font-normal text-gray-900 hover:border-brand-200 hover:bg-brand-50 hover:cursor-pointer"
-                aria-label="Login pengguna dengan Google"
+                aria-label="Sign in with Google (Admin)"
               >
                 <FcGoogle className="text-2xl" />
-                Log in with Google
+                Sign in with Google
               </button>
-            </div>
-            
-            <div className='flex justify-center'>
-              <div className="rounded-2xl py-2 text-sm text-gray-600">
-                Doesn't have an account?{' '}
-                <Link to="/register" className="font-medium text-brand-700 hover:underline">
-                  Sign up
-                </Link>
-              </div>
             </div>
           </div>
         </section>
@@ -141,22 +127,22 @@ export default function Login() {
         <section className="hidden relative lg:flex items-center justify-center overflow-hidden bg-brand-700 px-8 py-12 text-white">
           <img
             src={heroImage}
-            alt="Kanopi pohon"
+            alt="Tree canopy"
             className="absolute inset-0 h-full w-full object-cover opacity-20"
           />
           <div className="absolute inset-0 bg-gradient-to-br from-brand-800 via-brand-700 to-brand-600 opacity-95" />
           <div className="relative z-10 w-full max-w-xl space-y-20">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.45em] text-white/70">Explore the Green World</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.45em] text-white/70">Admin Monitoring</p>
               <h2 className="mt-3 text-4xl font-semibold leading-snug">
-                Discover nearby trees, reveal species details, complete learning challenges, and grow your streak!
+                Validate field reports, track growth trends, and ensure every tree is accounted for.
               </h2>
               <p className="mt-4 text-base text-white/80">
-                Don't just walk past them, scan the QR and let each tree tell its story.
+                The admin dashboard unifies QR scans, maintenance tasks, and tree health status—everything you need in one view.
               </p>
             </div>
 
-            <div className='flex flex-row gap-4'>
+            <div className="flex flex-row gap-4">
               <QrCode strokeWidth={2} size={23} />
               <Clover strokeWidth={2} size={23} />
               <TreePine strokeWidth={2} size={23} />
@@ -165,5 +151,6 @@ export default function Login() {
         </section>
       </div>
     </main>
+
   )
 }

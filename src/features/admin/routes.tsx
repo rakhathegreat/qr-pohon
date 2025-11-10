@@ -2,6 +2,7 @@ import { Navigate } from 'react-router-dom';
 
 import AdminLayout from './components/AdminLayout';
 import AddTree from './pages/AddTree';
+import AddClassification from './pages/AddClassification';
 import Analytics from './pages/Analytics';
 import AntiCheat from './pages/AntiCheat';
 import AuditLog from './pages/AuditLog';
@@ -23,6 +24,7 @@ const adminNavigation = {
     { path: 'analytics', element: <Analytics /> },
     { path: 'audit-log', element: <AuditLog /> },
     { path: 'add', element: <AddTree /> },
+    { path: 'classification/add', element: <AddClassification /> },
     { path: 'edit/:id', element: <EditTree /> },
     { index: true, element: <Navigate to="dashboard" replace /> },
   ],

@@ -1,84 +1,34 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import TreeForm from '@features/trees/components/TreeForm';
+import ClassificationTreeForm from '@features/trees/components/ClassificationTreeForm';
 import type { TreeFormValues } from '@features/trees/types';
 import { createTreeFormDefaults } from '@features/trees/utils/form';
 import { supabase } from '@shared/services/supabase';
 
-const AddTree = () => {
+const AddClassification = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const initialValues = useMemo(() => createTreeFormDefaults(), []);
 
   const handleSubmit = async (values: TreeFormValues) => {
-    const locationName = values.coordinates.location?.toString().trim();
-    if (!locationName) {
-      alert('Lokasi harus diisi sebelum menyimpan.');
-      return;
-    }
-
     setIsSubmitting(true);
     try {
-      const { data: jenisPohon, error: jenisPohonError } = await supabase
-        .from('jenis_pohon')
-        .select('id')
-        .eq('common_name', values.common_name)
-        .maybeSingle();
-
-      if (jenisPohonError || !jenisPohon) {
-        throw new Error('Jenis pohon tidak ditemukan di katalog. Pilih nama yang tersedia.');
-      }
-
-      let lokasiId: number | null = null;
-      const { data: existingLokasi, error: lokasiError } = await supabase
-        .from('lokasi')
-        .select('id')
-        .eq('lokasi', locationName)
-        .maybeSingle();
-
-      if (lokasiError) {
-        throw new Error(lokasiError.message);
-      }
-
-      if (existingLokasi) {
-        lokasiId = existingLokasi.id;
-      } else {
-        const { data: insertedLokasi, error: insertLokasiError } = await supabase
-          .from('lokasi')
-          .insert([{ lokasi: locationName }])
-          .select('id')
-          .single();
-
-        if (insertLokasiError || !insertedLokasi) {
-          throw new Error(insertLokasiError?.message ?? 'Gagal menambahkan lokasi baru.');
-        }
-
-        lokasiId = insertedLokasi.id;
-      }
-
-      const coordinatesPayload = {
-        latitude: Number(values.coordinates.latitude) || 0,
-        longitude: Number(values.coordinates.longitude) || 0,
-        location: locationName,
+      const payload = {
+        common_name: values.common_name.trim(),
+        scientific_name: values.scientific_name.trim(),
+        taxonomy: values.taxonomy,
+        endemic: values.endemic,
+        description: values.description,
+        characteristics: values.characteristics,
       };
 
-      const { error: insertTreeError } = await supabase.from('data_pohon').insert([
-        {
-          jenis_pohon_id: jenisPohon.id,
-          lokasi_id: lokasiId,
-          coordinates: coordinatesPayload,
-          created_at: new Date().toISOString(),
-        },
-      ]);
-
-      if (insertTreeError) {
-        throw new Error(insertTreeError.message);
-      }
+      const { error } = await supabase.from('jenis_pohon').insert([payload]);
+      if (error) throw new Error(error.message);
 
       navigate('/admin/dashboard');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Gagal menyimpan data pohon.';
+      const message = error instanceof Error ? error.message : 'Gagal menyimpan data klasifikasi.';
       alert(message);
     } finally {
       setIsSubmitting(false);
@@ -108,10 +58,9 @@ const AddTree = () => {
       </header>
 
       <main className="mx-auto w-full max-w-6xl space-y-8 px-4 py-4">
-
         <section>
           <div className="p-2 sm:py-5 sm:px-0">
-            <TreeForm
+            <ClassificationTreeForm
               initialValues={initialValues}
               onSubmit={handleSubmit}
               onCancel={() => navigate(-1)}
@@ -126,4 +75,4 @@ const AddTree = () => {
   );
 };
 
-export default AddTree;
+export default AddClassification;

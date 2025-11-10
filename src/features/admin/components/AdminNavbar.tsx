@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  Shield,
+  TreePine,
   Users,
   Gamepad2,
   ShieldCheck,
@@ -11,11 +11,13 @@ import {
   Menu,
   X,
   Trees,
+  LogOut,
 } from 'lucide-react';
 import { cn } from '@shared/lib/cn';
+import { supabase } from '@shared/services/supabase';
 
 const links = [
-  { to: '/admin/dashboard', label: 'Dashboard & Pohon', icon: Shield },
+  { to: '/admin/dashboard', label: 'Tree Management', icon: TreePine },
   { to: '/admin/users', label: 'Pengguna', icon: Users },
   { to: '/admin/game-rules', label: 'Aturan Game', icon: Gamepad2 },
   { to: '/admin/anti-cheat', label: 'Anti-Cheat', icon: ShieldCheck },
@@ -28,6 +30,9 @@ const AdminNavbar = () => {
   const [open, setOpen] = useState(false);
   const headerRef = useRef<HTMLElement | null>(null);
   const [headerHeight, setHeaderHeight] = useState(0);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [profile, setProfile] = useState<{ name: string; email: string }>({ name: '', email: '' });
+  const [profileLoading, setProfileLoading] = useState(true);
 
   useEffect(() => {
     const updateHeight = () => {
@@ -53,6 +58,80 @@ const AdminNavbar = () => {
       style.overflow = previousOverflow;
     };
   }, [open]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const resolveUser = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.user) return session.user;
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      return user;
+    };
+
+    const loadProfile = async () => {
+      const user = await resolveUser();
+
+      if (!isMounted) return;
+
+      if (!user) {
+        setProfile({ name: '', email: '' });
+        setProfileLoading(false);
+        return;
+      }
+
+      const fallbackName =
+        user.user_metadata?.full_name ??
+        user.user_metadata?.name ??
+        user.user_metadata?.display_name ??
+        user.user_metadata?.preferred_username ??
+        user.email ??
+        'Admin';
+      const fallbackEmail = user.email ?? '';
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name, name, display_name, email')
+        .eq('id', user.id)
+        .single();
+
+      if (!isMounted) return;
+
+      setProfile({
+        name: data?.full_name ?? data?.name ?? data?.display_name ?? fallbackName,
+        email: data?.email ?? fallbackEmail,
+      });
+      setProfileLoading(false);
+    };
+
+    loadProfile();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(() => {
+      loadProfile();
+    });
+
+    return () => {
+      isMounted = false;
+      authListener?.subscription.unsubscribe();
+    };
+  }, []);
+
+    const handleLogout = async () => {
+    // 1. hapus session Supabase
+    await supabase.auth.signOut()
+
+    // 2. bersihkan localStorage
+    localStorage.removeItem("token")
+    localStorage.removeItem("scanCount")
+
+    // 3. arahkan ke login
+    window.location.href = "/login/admin"
+  }
 
   return (
     <>
@@ -90,6 +169,48 @@ const AdminNavbar = () => {
           >
             {open ? <X className="h-4.5 w-4.5" /> : <Menu className="h-4.5 w-4.5" />}
           </button>
+          <div className='relative hidden lg:block'>
+            <div 
+            className='flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white hover:cursor-pointer'
+            onClick={() => setProfileMenuOpen((prev) => !prev)}
+            >
+              {profile.name ? profile.name.charAt(0).toUpperCase() : '?'}
+            </div>
+            {profileMenuOpen && (
+              <div className='absolute right-0 top-11 z-30 w-64 rounded-xl border border-gray-300 bg-white shadow-xl'>
+                <div className='flex flex-col font-medium text-sm px-5 py-2 mt-2'>
+                  <span className='whitespace-nowrap text-gray-900'>
+                    {profileLoading ? 'Memuat...' : profile.name || 'Pengguna'}
+                  </span>
+                  <span className='whitespace-nowrap text-gray-500'>
+                    {profile.email || (profileLoading ? '' : 'Email tidak tersedia')}
+                  </span>
+                </div>
+                <div className='flex flex-col px-2 mb-3'>
+                  <button className='flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900'>
+                    Dashboard
+                  </button>
+                  <button className='flex w-full flex-1 items-center gap-2 rounded-lg px-3 py-3 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900'>
+                    Account Settings
+                  </button>
+                  <button className='flex w-full flex-1 items-center gap-2 rounded-lg px-3 py-3 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 '>
+                    Moderation
+                  </button>
+                </div>
+                <div className='p-2 border-t border-gray-300'>
+                  <div 
+                    className='flex items-center p-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg'
+                    onClick={handleLogout} 
+                  >
+                    <div className='flex w-full flex-1 items-center gap-2 rounded-lg text-sm'>
+                      Logout
+                    </div>
+                    <LogOut className='h-4 w-4' />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
       {open && (

@@ -16,7 +16,7 @@ export default defineConfig({
     },
   },
   server: {
-    allowedHosts: ['af9aca1f752f.ngrok-free.app'],
+    allowedHosts: true,
     https: {
       key: '192.168.1.16+1-key.pem',
       cert: '192.168.1.16+1.pem'

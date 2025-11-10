@@ -50,7 +50,7 @@ const ActionButton = ({
   const palette =
     variant === 'danger'
       ? 'border-red-200 text-red-600 hover:bg-red-50 focus-visible:ring-red-500'
-      : 'border-gray-300 bg-gray-100 text-gray-600 hover:border-brand-300 hover:text-brand-700 focus-visible:ring-brand-600';
+      : 'border-gray-300 bg-white text-gray-600 hover:border-brand-300 hover:text-brand-700 focus-visible:ring-brand-600';
 
   return (
     <button
@@ -94,18 +94,18 @@ const TreeCard = ({
   return (
     <article
       className={cn(
-        'group relative flex flex-col gap-3 overflow-hidden rounded-xl border border-gray-200 bg-white p-4 shadow-sm ring-1 ring-gray-100/80',
+        'group relative flex flex-col gap-3 overflow-hidden rounded-xl border border-gray-200 bg-white p-4',
         className
       )}
     >
 
       <header className="flex gap-3 pt-1 flex-row items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">{tree.common_name}</h2>
+          <h2 className="text-base font-medium text-gray-900">{tree.common_name}</h2>
           <p className="text-sm italic text-gray-500">{tree.scientific_name}</p>
         </div>
         <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-3 py-1 text-xs font-medium text-brand-700">
-          <span className="text-[10px] uppercase text-brand-500">ID</span>
+          <span className="text-xs uppercase text-brand-500">ID</span>
           {truncateId(tree.id)}
         </span>
       </header>

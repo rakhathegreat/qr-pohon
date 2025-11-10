@@ -3,14 +3,14 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@shared/lib/cn';
 
 const cardVariants = cva(
-  'rounded-2xl border text-gray-900 shadow-sm transition-colors',
+  'rounded-2xl border text-gray-900 transition-colors',
   {
     variants: {
       variant: {
         solid: 'bg-white border-gray-200',
         subtle: 'bg-brand-50 border-transparent',
         muted: 'bg-white/80 border-dashed border-gray-200',
-        ghost: 'bg-transparent border-transparent shadow-none',
+        ghost: 'bg-transparent border-transparent',
       },
       padding: {
         none: '',

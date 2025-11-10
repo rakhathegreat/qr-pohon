@@ -9,11 +9,14 @@ import {
   ChevronRight,
   X,
   MapPin,
-  Trash2,
-  SquarePen,
+  QrCode,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+import LocationCard from '@features/location/components/LocationCard';
+import LocationTable from '@features/location/components/LocationTable';
+import LocationModal from '@features/location/components/LocationModal';
+import type { LocationRow } from '@features/location/types/location';
 import QRModal from '@features/trees/components/QRModal';
 import TreeCard from '@features/trees/components/TreeCard';
 import TreeTable from '@features/trees/components/TreeTable';
@@ -84,18 +87,12 @@ type JenisPohonRow = {
   characteristics: string[] | null;
 };
 
-type LokasiRow = {
-  id: number;
-  lokasi: string;
-  created_at?: string | null;
-};
-
 type DataPohonRow = {
   id: string;
   created_at: string | null;
   coordinates: Partial<TreeCoordinates> | null;
   jenis_pohon: JenisPohonRow | JenisPohonRow[] | null;
-  lokasi: LokasiRow | LokasiRow[] | null;
+  lokasi: LocationRow | LocationRow[] | null;
 };
 
 const ensureTaxonomy = (value?: Partial<TreeTaxonomy> | null): TreeTaxonomy => ({
@@ -166,7 +163,7 @@ const mapDataPohonRowToTree = (row: DataPohonRow): Tree | null => {
 const Dashboard = () => {
   const navigate = useNavigate();
   const [trees, setTrees] = useState<Tree[]>([]);
-  const [locations, setLocations] = useState<LokasiRow[]>([]);
+  const [locations, setLocations] = useState<LocationRow[]>([]);
   const [sort, setSort] = useState<string>(treeSortOptions[0].value);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -180,11 +177,19 @@ const Dashboard = () => {
   const [createdFilter, setCreatedFilter] = useState<CreatedFilter>('all');
   const [tableView, setTableView] = useState<TableView>('field');
   const isLocationView = tableView === 'locations';
+  const isTreeView = tableView === 'field';
   const supportsStatusFilter = tableView === 'field';
+  const supportsCreatedFilter = tableView !== 'locations';
+  const defaultSortValue = isLocationView ? locationSortOptions[0].value : treeSortOptions[0].value;
+  const [pendingStatusFilter, setPendingStatusFilter] = useState<StatusFilter>('all');
+  const [pendingCreatedFilter, setPendingCreatedFilter] = useState<CreatedFilter>('all');
+  const [pendingSort, setPendingSort] = useState(defaultSortValue);
   const addMenuRef = useRef<HTMLDivElement>(null);
   const filterMenuRef = useRef<HTMLDivElement>(null);
   const [qrOpen, setQrOpen] = useState(false);
   const [qrValue, setQrValue] = useState('');
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
+  const [locationSubmitting, setLocationSubmitting] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(timer);
@@ -205,21 +210,25 @@ const Dashboard = () => {
           )
           .ilike('common_name', `%${debouncedSearch}%`);
 
-        switch (sort) {
-          case 'name-desc':
-            query = query.order('common_name', { ascending: false });
-            break;
-          case 'recent':
-            query = query.order('created_at', { ascending: false });
-            break;
-          case 'oldest':
-            query = query.order('created_at', { ascending: true });
-            break;
-          default:
-            query = query.order('common_name', { ascending: true });
+        const classificationSort = (() => {
+          switch (sort) {
+            case 'name-desc':
+              return { column: 'common_name', ascending: false };
+            case 'recent':
+              return { column: 'created_at', ascending: false };
+            case 'oldest':
+              return { column: 'created_at', ascending: true };
+            default:
+              return { column: 'common_name', ascending: true };
+          }
+        })();
+
+        query = query.order(classificationSort.column, { ascending: classificationSort.ascending });
+        if (classificationSort.column !== 'id') {
+          query = query.order('id', { ascending: true });
         }
 
-        if (createdFilter !== 'all') {
+        if (supportsCreatedFilter && createdFilter !== 'all') {
           const days = createdFilter === '7d' ? 7 : 30;
           const since = new Date();
           since.setDate(since.getDate() - days);
@@ -249,21 +258,25 @@ const Dashboard = () => {
           .select('id, lokasi, created_at', { count: 'exact' })
           .ilike('lokasi', `%${debouncedSearch}%`);
 
-        switch (sort) {
-          case 'lokasi-desc':
-            query = query.order('lokasi', { ascending: false });
-            break;
-          case 'recent':
-            query = query.order('created_at', { ascending: false });
-            break;
-          case 'oldest':
-            query = query.order('created_at', { ascending: true });
-            break;
-          default:
-            query = query.order('lokasi', { ascending: true });
+        const locationSort = (() => {
+          switch (sort) {
+            case 'lokasi-desc':
+              return { column: 'lokasi', ascending: false };
+            case 'recent':
+              return { column: 'created_at', ascending: false };
+            case 'oldest':
+              return { column: 'created_at', ascending: true };
+            default:
+              return { column: 'lokasi', ascending: true };
+          }
+        })();
+
+        query = query.order(locationSort.column, { ascending: locationSort.ascending });
+        if (locationSort.column !== 'id') {
+          query = query.order('id', { ascending: true });
         }
 
-        if (createdFilter !== 'all') {
+        if (supportsCreatedFilter && createdFilter !== 'all') {
           const days = createdFilter === '7d' ? 7 : 30;
           const since = new Date();
           since.setDate(since.getDate() - days);
@@ -280,7 +293,7 @@ const Dashboard = () => {
           return;
         }
 
-        const rows = (data ?? []) as LokasiRow[];
+        const rows = (data ?? []) as LocationRow[];
         setLocations(rows);
         setTrees([]);
         setTotal(count ?? 0);
@@ -311,27 +324,35 @@ const Dashboard = () => {
           `,
           { count: 'exact' }
         )
-        .ilike('jenis_pohon.common_name', `%${debouncedSearch}%`);
+        .ilike('jenis_pohon.common_name', `%${debouncedSearch}%`)
+        .order('created_at', { ascending: false });
 
-      switch (sort) {
-        case 'name-desc':
-          query = query.order('common_name', { ascending: false, foreignTable: 'jenis_pohon' });
-          break;
-        case 'recent':
-          query = query.order('created_at', { ascending: false });
-          break;
-        case 'oldest':
-          query = query.order('created_at', { ascending: true });
-          break;
-        default:
-          query = query.order('common_name', { ascending: true, foreignTable: 'jenis_pohon' });
+      const treeSortConfig = (() => {
+        switch (sort) {
+          case 'name-desc':
+            return { column: 'common_name', ascending: false, foreignTable: 'jenis_pohon' as const };
+          case 'recent':
+            return { column: 'created_at', ascending: false };
+          case 'oldest':
+            return { column: 'created_at', ascending: true };
+          default:
+            return { column: 'common_name', ascending: true, foreignTable: 'jenis_pohon' as const };
+        }
+      })();
+
+      query = query.order(treeSortConfig.column, {
+        ascending: treeSortConfig.ascending,
+        ...(treeSortConfig.foreignTable ? { foreignTable: treeSortConfig.foreignTable } : {}),
+      });
+      if (treeSortConfig.column !== 'id') {
+        query = query.order('id', { ascending: true });
       }
 
       if (supportsStatusFilter && statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
       }
 
-      if (createdFilter !== 'all') {
+      if (supportsCreatedFilter && createdFilter !== 'all') {
         const days = createdFilter === '7d' ? 7 : 30;
         const since = new Date();
         since.setDate(since.getDate() - days);
@@ -357,7 +378,17 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [createdFilter, debouncedSearch, page, perPage, sort, statusFilter, supportsStatusFilter, tableView]);
+  }, [
+    createdFilter,
+    debouncedSearch,
+    page,
+    perPage,
+    sort,
+    statusFilter,
+    supportsCreatedFilter,
+    supportsStatusFilter,
+    tableView,
+  ]);
 
   useEffect(() => {
     fetchTrees();
@@ -388,18 +419,24 @@ const Dashboard = () => {
   const end = Math.min(page * perPage, total);
   const summaryLabel = isLocationView ? 'lokasi' : 'pohon';
 
-  const handleAddLocation = async () => {
-    const name = window.prompt('Nama lokasi baru');
-    if (!name || !name.trim()) return;
-    const { error } = await supabase.from('lokasi').insert({ lokasi: name.trim() });
+  const handleAddLocation = async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+
+    setLocationSubmitting(true);
+    const { error } = await supabase.from('lokasi').insert({ lokasi: trimmed });
+    setLocationSubmitting(false);
+
     if (error) {
       alert(`Gagal menambah lokasi: ${error.message}`);
       return;
     }
+
+    setLocationModalOpen(false);
     fetchTrees();
   };
 
-  const handleEditLocation = async (row: LokasiRow) => {
+  const handleEditLocation = async (row: LocationRow) => {
     const name = window.prompt('Ubah nama lokasi', row.lokasi);
     if (!name || !name.trim() || name.trim() === row.lokasi) return;
     const { error } = await supabase.from('lokasi').update({ lokasi: name.trim() }).eq('id', row.id);
@@ -458,8 +495,12 @@ const Dashboard = () => {
   };
 
   const handleAddTree = () => {
+    if (tableView === 'classification') {
+      navigate('/admin/classification/add');
+      return;
+    }
     if (isLocationView) {
-      handleAddLocation();
+      setLocationModalOpen(true);
       return;
     }
     navigate('/admin/add');
@@ -472,18 +513,40 @@ const Dashboard = () => {
 
   const isDesktop = useMediaQuery('(min-width: 640px)');
   const hasActiveFilters =
-    (!isLocationView && createdFilter !== 'all') ||
-    (!isLocationView && sort !== 'name-asc') ||
-    (supportsStatusFilter && statusFilter !== 'all');
-  useBodyScrollLock(!isDesktop && (addMenuOpen || filterMenuOpen));
+    (supportsStatusFilter && statusFilter !== 'all') ||
+    (supportsCreatedFilter && createdFilter !== 'all') ||
+    sort !== defaultSortValue;
+  useBodyScrollLock((!isDesktop && (addMenuOpen || filterMenuOpen)) || locationModalOpen);
 
   const closeFilterMenu = () => setFilterMenuOpen(false);
   const closeAddMenu = () => setAddMenuOpen(false);
-  const resetFilters = () => {
-    setStatusFilter('all');
-    setCreatedFilter('all');
-    setSort('name-asc');
+  const resetPendingFilters = () => {
+    setPendingStatusFilter('all');
+    setPendingCreatedFilter('all');
+    setPendingSort(defaultSortValue);
   };
+  const applyFilters = () => {
+    if (supportsStatusFilter) setStatusFilter(pendingStatusFilter);
+    if (supportsCreatedFilter) setCreatedFilter(pendingCreatedFilter);
+    setSort(pendingSort);
+    setPage(1);
+    closeFilterMenu();
+  };
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, createdFilter, sort, tableView]);
+
+  useEffect(() => {
+    if (!filterMenuOpen) return;
+    setPendingStatusFilter(statusFilter);
+    setPendingCreatedFilter(createdFilter);
+    setPendingSort(sort);
+  }, [filterMenuOpen, statusFilter, createdFilter, sort]);
+
+  useEffect(() => {
+    setSort(defaultSortValue);
+  }, [defaultSortValue]);
 
   const renderFilterFields = () => (
     <div className="space-y-4 text-xs font-semibold text-gray-500">
@@ -495,10 +558,10 @@ const Dashboard = () => {
               <button
                 type="button"
                 key={option.value}
-                onClick={() => setStatusFilter(option.value)}
+                onClick={() => setPendingStatusFilter(option.value)}
                 className={cn(
                   'rounded-md border px-3 py-1.5 font-semibold',
-                  statusFilter === option.value
+                  pendingStatusFilter === option.value
                     ? 'border-transparent bg-brand-100 text-brand-700'
                     : 'border-gray-200 text-gray-600'
                 )}
@@ -510,7 +573,7 @@ const Dashboard = () => {
         </div>
       )}
 
-      {!isLocationView && (
+      {supportsCreatedFilter && (
         <div>
           <p>Dibuat</p>
           <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
@@ -518,10 +581,10 @@ const Dashboard = () => {
               <button
                 type="button"
                 key={option.value}
-                onClick={() => setCreatedFilter(option.value)}
+                onClick={() => setPendingCreatedFilter(option.value)}
                 className={cn(
                   'rounded-md border px-3 py-1.5 font-semibold',
-                  createdFilter === option.value
+                  pendingCreatedFilter === option.value
                     ? 'border-transparent bg-brand-100 text-brand-700'
                     : 'border-gray-200 text-gray-600'
                 )}
@@ -535,20 +598,20 @@ const Dashboard = () => {
 
       <div>
         <p>Sort</p>
-        <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
-          {(isLocationView ? locationSortOptions : treeSortOptions).map((option) => (
-            <button
-              type="button"
-              key={option.value}
-              onClick={() => setSort(option.value)}
-              className={cn(
-                'rounded-md border px-3 py-1.5 font-semibold',
-                sort === option.value
-                  ? 'border-transparent bg-brand-100 text-brand-700'
-                  : 'border-gray-200 text-gray-600'
-              )}
-            >
-              {option.label}
+          <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+            {(isLocationView ? locationSortOptions : treeSortOptions).map((option) => (
+              <button
+                type="button"
+                key={option.value}
+                onClick={() => setPendingSort(option.value)}
+                className={cn(
+                  'rounded-md border px-3 py-1.5 font-semibold',
+                  pendingSort === option.value
+                    ? 'border-transparent bg-brand-100 text-brand-700'
+                    : 'border-gray-200 text-gray-600'
+                )}
+              >
+                {option.label}
             </button>
           ))}
         </div>
@@ -562,14 +625,11 @@ const Dashboard = () => {
         size="sm"
         variant="outline"
         className="flex-1"
-        onClick={() => {
-          resetFilters();
-          closeFilterMenu();
-        }}
+        onClick={resetPendingFilters}
       >
         Reset
       </Button>
-      <Button size="sm" className="flex-1" onClick={closeFilterMenu}>
+      <Button size="sm" className="flex-1" onClick={applyFilters}>
         Apply
       </Button>
     </div>
@@ -588,7 +648,7 @@ const Dashboard = () => {
           <button
             type="button"
             onClick={() => {
-              handleAddLocation();
+              setLocationModalOpen(true);
               closeAddMenu();
             }}
             className={cn(baseClasses, actionClasses)}
@@ -617,8 +677,19 @@ const Dashboard = () => {
           className={cn(baseClasses, actionClasses)}
         >
           <Plus className="h-4 w-4" />
-          Tambah Pohon
+          Insert Data
         </button>
+
+        {isTreeView && (
+          <button
+            type="button"
+            onClick={() => {}}
+            className={cn(baseClasses, actionClasses)}
+          >
+            <QrCode className="h-4 w-4" />
+            Print Batch
+          </button>
+        )}
 
         <label className={cn('cursor-pointer', baseClasses, actionClasses)}>
           <UploadCloud className="h-4 w-4" />
@@ -717,7 +788,8 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-geist-50 pb-28 sm:pb-10">
+    <>
+    <div className="min-h-screen bg-geist-50 pb-6">
       <div className="mx-auto space-y-7">
         <header className="border-b border-gray-300">
           <div className="flex flex-col mx-auto max-w-6xl gap-5 md:flex-row md:items-center md:justify-between">
@@ -746,9 +818,9 @@ const Dashboard = () => {
                       onClick={() => setTableView(option.value)}
                       aria-pressed={isActive}
                       className={cn(
-                        'flex flex-col rounded-lg p-2.5 text-center transition-colors',
+                        'flex flex-col rounded-md p-2.5 text-center transition-colors',
                         isActive
-                          ? 'bg-brand-100 text-brand-800 shadow-sm'
+                          ? 'bg-brand-100 text-brand-800'
                           : 'text-gray-600 hover:bg-gray-50'
                       )}
                     >
@@ -815,7 +887,7 @@ const Dashboard = () => {
                 <Button
                   size="sm"
                   variant="primary"
-                  aria-label="Tambah pohon"
+                  aria-label="Insert new data"
                   className="h-11 inline-flex items-center gap-2 px-4 sm:w-auto"
                   onClick={() => setAddMenuOpen((prev) => !prev)}
                 >
@@ -932,6 +1004,16 @@ const Dashboard = () => {
         </div>
       </div>
     </div>
+    <LocationModal
+      open={locationModalOpen}
+      onClose={() => {
+        if (locationSubmitting) return;
+        setLocationModalOpen(false);
+      }}
+      onSubmit={handleAddLocation}
+      isSubmitting={locationSubmitting}
+    />
+    </>
   );
 };
 
@@ -1005,109 +1087,4 @@ const MobileSheet = ({ onClose, title, description, children, footer, className 
       {footer}
     </div>
   </>
-);
-
-type LocationTableProps = {
-  data: LokasiRow[];
-  onEdit: (row: LokasiRow) => void;
-  onDelete: (id: number) => void;
-};
-
-type LocationCardProps = {
-  location: LokasiRow;
-  onEdit: (row: LokasiRow) => void;
-  onDelete: (id: number) => void;
-};
-
-const formatLocationDate = (value?: string | null) => {
-  if (!value) return '-';
-  return new Date(value).toLocaleDateString('id-ID', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-};
-
-const LocationCard = ({ location, onEdit, onDelete }: LocationCardProps) => (
-  <article className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-    <div className="flex items-start justify-between gap-3">
-      <div>
-        <p className="text-base font-semibold text-gray-900">{location.lokasi}</p>
-        <p className="text-xs text-gray-500">
-          Ditambahkan {formatLocationDate(location.created_at)}
-        </p>
-      </div>
-      <span className="text-xs font-medium text-gray-400">ID #{location.id}</span>
-    </div>
-    <div className="mt-4 flex items-center justify-end gap-2">
-      <button
-        type="button"
-        className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-        onClick={() => onEdit(location)}
-      >
-        <SquarePen className="h-4 w-4" />
-        Edit
-      </button>
-      <button
-        type="button"
-        className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
-        onClick={() => onDelete(location.id)}
-      >
-        <Trash2 className="h-4 w-4" />
-        Hapus
-      </button>
-    </div>
-  </article>
-);
-
-const LocationTable = ({ data, onEdit, onDelete }: LocationTableProps) => (
-  <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-    <table className="min-w-full border-separate border-spacing-0 text-sm text-gray-700">
-      <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
-        <tr>
-          <th className="px-6 py-3 text-left">Lokasi ID</th>
-          <th className="px-6 py-3 text-left">Nama Lokasi</th>
-          <th className="px-6 py-3 text-left">Dibuat</th>
-          <th className="px-6 py-3 text-right">Aksi</th>
-        </tr>
-      </thead>
-      <tbody>
-        {data.map((location, index) => (
-          <tr
-            key={location.id}
-            className={cn(
-              'border-t border-gray-100',
-              index % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'
-            )}
-          >
-            <td className="px-6 py-4 font-mono text-xs text-gray-500">#{location.id}</td>
-            <td className="px-6 py-4 text-sm font-medium text-gray-900">{location.lokasi}</td>
-            <td className="px-6 py-4 text-sm text-gray-600">
-              {formatLocationDate(location.created_at)}
-            </td>
-            <td className="px-6 py-4 text-right">
-              <div className="inline-flex gap-2">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-                  onClick={() => onEdit(location)}
-                >
-                  <SquarePen className="h-4 w-4" />
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
-                  onClick={() => onDelete(location.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Hapus
-                </button>
-              </div>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
 );
