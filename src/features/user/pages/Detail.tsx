@@ -29,7 +29,7 @@ export default function Detail() {
     })()
   }, [id])
 
-  if (loading) return <div className="p-10">Loading…</div>
+  if (loading) return <div className="p-10">Loading...</div>
   if (!tree) return <div className="p-10">Pohon tidak ditemukan</div>
 
   return (
