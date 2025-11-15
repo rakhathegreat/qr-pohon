@@ -10,10 +10,19 @@ export type LocationModalProps = {
   onClose: () => void;
   onSubmit: (lokasi: string) => Promise<void> | void;
   isSubmitting?: boolean;
+  mode?: 'create' | 'edit';
+  initialValue?: string;
 };
 
-const LocationModal = ({ open, onClose, onSubmit, isSubmitting = false }: LocationModalProps) => {
-  const [value, setValue] = useState('');
+const LocationModal = ({
+  open,
+  onClose,
+  onSubmit,
+  isSubmitting = false,
+  mode = 'create',
+  initialValue = '',
+}: LocationModalProps) => {
+  const [value, setValue] = useState(initialValue);
 
   useEffect(() => {
     if (!open || typeof document === 'undefined') return undefined;
@@ -24,21 +33,32 @@ const LocationModal = ({ open, onClose, onSubmit, isSubmitting = false }: Locati
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    setValue(initialValue);
+  }, [initialValue, open]);
+
   if (!open) return null;
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!value.trim() || isSubmitting) return;
     await onSubmit(value.trim());
-    setValue('');
+    if (mode === 'create') {
+      setValue('');
+    }
   };
+
+  const isEditMode = mode === 'edit';
+  const title = isEditMode ? 'Edit Location' : 'Add New Location';
+  const submitLabel = isEditMode ? 'Update' : 'Save';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
       <div className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-medium tracking-tight text-gray-900">Add New Location</h2>
+            <h2 className="text-2xl font-medium tracking-tight text-gray-900">{title}</h2>
           </div>
           <button
             type="button"
@@ -58,7 +78,7 @@ const LocationModal = ({ open, onClose, onSubmit, isSubmitting = false }: Locati
             onValueChange={setValue}
             disabled={isSubmitting}
             required
-            className="rounded-lg border-gray-200"
+            className="rounded-lg border-gray-200 font-normal"
           />
 
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
@@ -72,8 +92,8 @@ const LocationModal = ({ open, onClose, onSubmit, isSubmitting = false }: Locati
             >
               Cancel
             </Button>
-            <Button type="submit" size="sm" className="w-full sm:w-40" disabled={isSubmitting || !value.trim()}>
-              {isSubmitting ? 'Saving...' : 'Save'}
+            <Button type="submit" size="sm" className="w-full sm:w-40 font-normal" disabled={isSubmitting || !value.trim()}>
+              {isSubmitting ? 'Saving...' : submitLabel}
             </Button>
           </div>
         </form>

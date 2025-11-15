@@ -19,7 +19,6 @@ type TreeTableProps = {
   className?: string;
 };
 
-const truncateId = (id: string) => `${id.slice(0, 6)}...${id.slice(-4)}`;
 
 const formatDate = (value?: string | null) => {
   if (!value) return '-';
@@ -156,8 +155,13 @@ const TreeTable = ({
 
   const renderFieldColumns = (tree: Tree) => (
     <>
-      <td className="whitespace-nowrap px-6 py-4 font-mono text-sm text-gray-900">
-        {truncateId(tree.id)}
+      <td className="px-6 py-4 font-mono text-xs text-gray-500">
+        <span
+          className="block max-w-[160px] truncate"
+          title={tree.id}
+        >
+          {tree.id}
+        </span>
       </td>
       <td className="px-6 py-4 text-gray-900">{tree.common_name}</td>
       <td className="px-6 py-4 italic text-gray-500">{tree.scientific_name || '-'}</td>

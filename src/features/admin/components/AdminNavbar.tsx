@@ -3,11 +3,7 @@ import { NavLink } from 'react-router-dom';
 import {
   TreePine,
   Users,
-  Gamepad2,
-  ShieldCheck,
-  Gavel,
   BarChart3,
-  FileText,
   Menu,
   X,
   Trees,
@@ -23,11 +19,11 @@ const profileLinks = [
 const links = [
   { to: '/admin/dashboard', label: 'Tree Management', icon: TreePine },
   { to: '/admin/users', label: 'Users', icon: Users },
-  { to: '/admin/game-rules', label: 'Game Rules', icon: Gamepad2 },
-  { to: '/admin/anti-cheat', label: 'Anti-Cheat', icon: ShieldCheck },
-  { to: '/admin/moderation', label: 'Moderation', icon: Gavel },
-  { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
-  { to: '/admin/audit-log', label: 'Audit Log', icon: FileText },
+  // { to: '/admin/game-rules', label: 'Game Rules', icon: Gamepad2 },
+  // { to: '/admin/anti-cheat', label: 'Anti-Cheat', icon: ShieldCheck },
+  // { to: '/admin/moderation', label: 'Moderation', icon: Gavel },
+  { to: '/admin/analytics', label: 'Reports', icon: BarChart3 },
+  // { to: '/admin/audit-log', label: 'Audit Log', icon: FileText },
 ];
 
 const AdminNavbar = () => {
@@ -144,23 +140,68 @@ const AdminNavbar = () => {
             <Trees strokeWidth={2.5} className="h-5 w-5 text-brand-600" />
             <h1 className="text-lg font-medium text-gray-900">Admin Panel</h1>
           </div>
-          <nav className="hidden items-center gap-2 lg:flex">
-            {links.map(({ to, label, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  cn(
-                    'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition',
-                    isActive ? 'bg-brand-100 text-brand-700' : 'text-gray-600 hover:bg-gray-200'
-                  )
-                }
+
+          <div className='flex flex-row space-x-6'>            
+            <nav className="hidden items-center gap-2 lg:flex">
+              {links.map(({ to, label, icon: Icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) =>
+                    cn(
+                      'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition',
+                      isActive ? 'bg-brand-100 text-brand-700' : 'text-gray-600 hover:bg-gray-200'
+                    )
+                  }
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </NavLink>
+              ))}
+            </nav>
+            <div className='relative hidden lg:block'>
+              <div 
+              className='flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white hover:cursor-pointer'
+              onClick={() => setProfileMenuOpen((prev) => !prev)}
               >
-                <Icon className="h-4 w-4" />
-                {label}
-              </NavLink>
-            ))}
-          </nav>
+                {profile.name ? profile.name.charAt(0).toUpperCase() : '?'}
+              </div>
+              {profileMenuOpen && (
+                <div className='absolute right-0 top-11 z-30 w-64 rounded-xl border border-gray-300 bg-white shadow-xl'>
+                  <div className='flex flex-col font-medium text-sm px-5 py-2 mt-2'>
+                    <span className='whitespace-nowrap text-gray-900'>
+                      {profileLoading ? 'Loading...' : profile.name || 'User'}
+                    </span>
+                    <span className='whitespace-nowrap text-gray-500'>
+                      {profile.email || (profileLoading ? '' : 'Email not available')}
+                    </span>
+                  </div>
+                  <div className='flex flex-col px-2 mb-3'>
+                    <button className='flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900'>
+                      Dashboard
+                    </button>
+                    <button className='flex w-full flex-1 items-center gap-2 rounded-lg px-3 py-3 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900'>
+                      Account Settings
+                    </button>
+                    <button className='flex w-full flex-1 items-center gap-2 rounded-lg px-3 py-3 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 '>
+                      Moderation
+                    </button>
+                  </div>
+                  <div className='p-2 border-t border-gray-300'>
+                    <div 
+                      className='flex items-center p-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg'
+                      onClick={handleLogout} 
+                    >
+                      <div className='flex w-full flex-1 items-center gap-2 rounded-lg text-sm'>
+                        Logout
+                      </div>
+                      <LogOut className='h-4 w-4' />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
           <button
             type="button"
             aria-label="Toggle navigation"
@@ -169,48 +210,6 @@ const AdminNavbar = () => {
           >
             {open ? <X className="h-4.5 w-4.5" /> : <Menu className="h-4.5 w-4.5" />}
           </button>
-          <div className='relative hidden lg:block'>
-            <div 
-            className='flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white hover:cursor-pointer'
-            onClick={() => setProfileMenuOpen((prev) => !prev)}
-            >
-              {profile.name ? profile.name.charAt(0).toUpperCase() : '?'}
-            </div>
-            {profileMenuOpen && (
-              <div className='absolute right-0 top-11 z-30 w-64 rounded-xl border border-gray-300 bg-white shadow-xl'>
-                <div className='flex flex-col font-medium text-sm px-5 py-2 mt-2'>
-                  <span className='whitespace-nowrap text-gray-900'>
-                    {profileLoading ? 'Loading...' : profile.name || 'User'}
-                  </span>
-                  <span className='whitespace-nowrap text-gray-500'>
-                    {profile.email || (profileLoading ? '' : 'Email not available')}
-                  </span>
-                </div>
-                <div className='flex flex-col px-2 mb-3'>
-                  <button className='flex w-full items-center gap-2 rounded-lg px-3 py-3 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900'>
-                    Dashboard
-                  </button>
-                  <button className='flex w-full flex-1 items-center gap-2 rounded-lg px-3 py-3 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900'>
-                    Account Settings
-                  </button>
-                  <button className='flex w-full flex-1 items-center gap-2 rounded-lg px-3 py-3 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 '>
-                    Moderation
-                  </button>
-                </div>
-                <div className='p-2 border-t border-gray-300'>
-                  <div 
-                    className='flex items-center p-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg'
-                    onClick={handleLogout} 
-                  >
-                    <div className='flex w-full flex-1 items-center gap-2 rounded-lg text-sm'>
-                      Logout
-                    </div>
-                    <LogOut className='h-4 w-4' />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </header>
       {open && (

@@ -190,6 +190,8 @@ const Dashboard = () => {
   const [qrValue, setQrValue] = useState('');
   const [locationModalOpen, setLocationModalOpen] = useState(false);
   const [locationSubmitting, setLocationSubmitting] = useState(false);
+  const [locationModalMode, setLocationModalMode] = useState<'create' | 'edit'>('create');
+  const [locationToEdit, setLocationToEdit] = useState<LocationRow | null>(null);
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(timer);
@@ -418,33 +420,53 @@ const Dashboard = () => {
   const start = total === 0 ? 0 : (page - 1) * perPage + 1;
   const end = Math.min(page * perPage, total);
   const summaryLabel = isLocationView ? 'locations' : 'trees';
+  const locationModalInitialValue = locationModalMode === 'edit' ? locationToEdit?.lokasi ?? '' : '';
 
-  const handleAddLocation = async (name: string) => {
+  const resetLocationModalState = () => {
+    setLocationModalOpen(false);
+    setLocationModalMode('create');
+    setLocationToEdit(null);
+  };
+
+  const handleLocationSubmit = async (name: string) => {
     const trimmed = name.trim();
     if (!trimmed) return;
 
     setLocationSubmitting(true);
-    const { error } = await supabase.from('lokasi').insert({ lokasi: trimmed });
-    setLocationSubmitting(false);
+    try {
+      if (locationModalMode === 'edit') {
+        if (!locationToEdit) {
+          alert('No location selected for editing.');
+          return;
+        }
+        if (trimmed === locationToEdit.lokasi) {
+          resetLocationModalState();
+          return;
+        }
+        const { error } = await supabase.from('lokasi').update({ lokasi: trimmed }).eq('id', locationToEdit.id);
+        if (error) {
+          alert(`Failed to update location: ${error.message}`);
+          return;
+        }
+      } else {
+        const { error } = await supabase.from('lokasi').insert({ lokasi: trimmed });
+        if (error) {
+          alert(`Failed to add location: ${error.message}`);
+          return;
+        }
+      }
 
-    if (error) {
-      alert(`Failed to add location: ${error.message}`);
-      return;
+      resetLocationModalState();
+      fetchTrees();
+    } finally {
+      setLocationSubmitting(false);
     }
-
-    setLocationModalOpen(false);
-    fetchTrees();
   };
 
-  const handleEditLocation = async (row: LocationRow) => {
-    const name = window.prompt('Rename location', row.lokasi);
-    if (!name || !name.trim() || name.trim() === row.lokasi) return;
-    const { error } = await supabase.from('lokasi').update({ lokasi: name.trim() }).eq('id', row.id);
-    if (error) {
-      alert(`Failed to update location: ${error.message}`);
-      return;
-    }
-    fetchTrees();
+  const handleEditLocation = (row: LocationRow) => {
+    setLocationModalMode('edit');
+    setLocationToEdit(row);
+    setLocationModalOpen(true);
   };
 
   const handleDeleteLocation = async (id: number) => {
@@ -500,6 +522,8 @@ const Dashboard = () => {
       return;
     }
     if (isLocationView) {
+      setLocationModalMode('create');
+      setLocationToEdit(null);
       setLocationModalOpen(true);
       return;
     }
@@ -648,6 +672,8 @@ const Dashboard = () => {
           <button
             type="button"
             onClick={() => {
+              setLocationModalMode('create');
+              setLocationToEdit(null);
               setLocationModalOpen(true);
               closeAddMenu();
             }}
@@ -792,8 +818,8 @@ const Dashboard = () => {
     <div className="min-h-screen bg-geist-50 pb-6">
       <div className="mx-auto space-y-7">
         <header className="border-b border-gray-300">
-          <div className="flex flex-col mx-auto max-w-6xl gap-5 md:flex-row md:items-center md:justify-between">
-            <div className="space-y-4 px-4 py-7 md:py-10">
+          <div className="mx-auto flex px-6 lg:px-0 max-w-6xl flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-4 py-7 md:py-10">
               <h1 className="text-3xl font-medium tracking-tight text-gray-900 sm:text-4xl">Tree Management</h1>
               <p className="text-sm font-normal text-gray-900">
                 All tree data will be displayed here.
@@ -1008,10 +1034,12 @@ const Dashboard = () => {
       open={locationModalOpen}
       onClose={() => {
         if (locationSubmitting) return;
-        setLocationModalOpen(false);
+        resetLocationModalState();
       }}
-      onSubmit={handleAddLocation}
+      onSubmit={handleLocationSubmit}
       isSubmitting={locationSubmitting}
+      mode={locationModalMode}
+      initialValue={locationModalInitialValue}
     />
     </>
   );

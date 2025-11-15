@@ -17,7 +17,7 @@ export default function AdminLogin() {
 
   const redirectByRole = useCallback(async (userId: string) => {
     const { data, error } = await supabase
-      .from("profiles")
+      .from("admin")
       .select("role")
       .eq("id", userId)
       .single()

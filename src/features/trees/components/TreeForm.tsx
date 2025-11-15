@@ -82,6 +82,8 @@ const TreeForm = ({
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [geolocationLoading, setGeolocationLoading] = useState(false);
+  const [, setGeolocationError] = useState<string | null>(null);
   const nameDebounceRef = useRef<number>(0);
   const skipNextLookupRef = useRef(false);
   const nameSuggestionsRef = useRef<HTMLDivElement>(null);
@@ -197,6 +199,49 @@ const TreeForm = ({
         [field]: field === 'location' ? value : toNumeric(),
       },
     }));
+  };
+
+  const handleGetLocation = () => {
+    if (fieldDisabled) return;
+
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setGeolocationError('Geolocation is not supported in this browser.');
+      return;
+    }
+
+    setGeolocationError(null);
+    setGeolocationLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setGeolocationLoading(false);
+        setValues((prev) => ({
+          ...prev,
+          coordinates: {
+            ...prev.coordinates,
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+          },
+        }));
+      },
+      (error) => {
+        setGeolocationLoading(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          setGeolocationError('Location permission denied. Please allow access and try again.');
+          return;
+        }
+        if (error.code === error.TIMEOUT) {
+          setGeolocationError('Location request timed out. Please try again.');
+          return;
+        }
+        setGeolocationError('Unable to fetch your location. Please try again.');
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      }
+    );
   };
 
   const handleCharacteristicAdd = () => {
@@ -592,32 +637,47 @@ const TreeForm = ({
           title="Field Coordinates"
           description="Ensure the latitude/longitude values use decimal format."
         >
-          <div className="grid gap-4 md:grid-cols-3">
-            <Input
-              label="Latitude"
-              step="any"
-              placeholder="-6.200"
-              required
-              value={values.coordinates.latitude?.toString() ?? ''}
-              onValueChange={(val) => setCoordinates('latitude', val)}
-              disabled={fieldDisabled}
-            />
-            <Input
-              label="Longitude"
-              step="any"
-              placeholder="106.816"
-              required
-              value={values.coordinates.longitude?.toString() ?? ''}
-              onValueChange={(val) => setCoordinates('longitude', val)}
-              disabled={fieldDisabled}
-            />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="flex flex-row w-full gap-2">
+                <Input
+                  label="Latitude"
+                  step="any"
+                  placeholder="-6.200"
+                  required
+                  value={values.coordinates.latitude?.toString() ?? ''}
+                  onValueChange={(val) => setCoordinates('latitude', val)}
+                  disabled
+                />
+                <Input
+                  label="Longitude"
+                  step="any"
+                  placeholder="106.816"
+                  required
+                  value={values.coordinates.longitude?.toString() ?? ''}
+                  onValueChange={(val) => setCoordinates('longitude', val)}
+                  disabled
+                />
+              </div>
+              <div className="flex items-end w-full sm:w-auto">
+                <div className="flex flex-col items-start gap-2 w-full sm:w-auto">
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="whitespace-nowrap w-full py-3 sm:px-4"
+                    onClick={handleGetLocation}
+                    disabled={fieldDisabled || geolocationLoading}
+                  >
+                    {geolocationLoading ? 'Getting...' : 'Get Location'}
+                  </Button>
+                </div>
+              </div>
+            </div>
             <div className="relative" ref={locationSuggestionsRef}>
               <Input
                 label="Location"
                 placeholder="Location name"
-                required
                 value={values.coordinates.location?.toString() ?? ''}
-                disabled={fieldDisabled}
                 ref={locationInputRef}
                 onFocus={() => {
                   if (
@@ -820,7 +880,7 @@ type FormSectionProps = {
 };
 
 const FormSection = ({ title, description, badge, children }: FormSectionProps) => (
-  <section className="rounded-3xl border border-gray-100 bg-white/90 p-6 ">
+  <section className="rounded-3xl border border-gray-300 bg-white/90 p-6 ">
     <div className="mb-4 space-y-1">
       {badge && (
         <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-600">{badge}</p>

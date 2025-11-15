@@ -115,7 +115,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             aria-describedby={messageId}
             className={cn(
               inputVariants({ variant, size }),
-              showEscapeHint && hasValue && 'pr-16',
+              showEscapeHint && hasValue ,
               error && 'border-red-400 focus-visible:ring-red-200',
               className
             )}

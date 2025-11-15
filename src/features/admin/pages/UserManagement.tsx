@@ -9,7 +9,6 @@ import {
 } from 'react';
 import { EllipsisVertical, ListFilter, Search, X } from 'lucide-react';
 
-import Badge from '@shared/components/Badge';
 import Button, { buttonVariants } from '@shared/components/Button';
 import Input from '@shared/components/Input';
 import { cn } from '@shared/lib/cn';
@@ -40,18 +39,6 @@ type AdminRecord = {
   profile_id?: string | number | null;
   user_id?: string | number | null;
   id?: string | number | null;
-};
-
-const statusLabels: Record<UserStatus, string> = {
-  active: 'Active',
-  suspended: 'Suspended',
-  pending: 'Pending',
-};
-
-const statusBadgeVariant: Record<UserStatus, 'success' | 'destructive' | 'secondary'> = {
-  active: 'success',
-  suspended: 'destructive',
-  pending: 'secondary',
 };
 
 const statusFilterOptions: Array<{ value: UserStatus | 'all'; label: string }> = [
@@ -326,7 +313,7 @@ const UserManagement = () => {
     <div className="min-h-screen bg-geist-50 pb-12">
       <div className="mx-auto w-full space-y-6">
         <header className="border-b border-gray-300">
-          <div className="mx-auto flex max-w-6xl flex-col gap-5 md:flex-row md:items-center md:justify-between">
+          <div className="mx-auto flex px-6 lg:px-0 max-w-6xl flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div className="space-y-4 py-7 md:py-10">
               <h1 className="text-3xl font-medium tracking-tight text-gray-900 sm:text-4xl">Users Management</h1>
               <p className="text-sm font-normal text-gray-900">
@@ -336,10 +323,10 @@ const UserManagement = () => {
           </div>
         </header>
 
-        <div className="px-10">
+        <div className="px-4 sm:px-6 lg:px-0">
           <section className="mx-auto flex w-full max-w-6xl flex-col gap-4">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex w-full flex-col gap-2 lg:flex-row lg:items-center lg:gap-3">
+              <div className="flex w-full gap-2 flex-row lg:items-center lg:gap-3">
                 <div className="relative w-full">
                   <Search strokeWidth={2} className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
@@ -350,12 +337,12 @@ const UserManagement = () => {
                     className="h-11 bg-white pl-10"
                   />
                 </div>
-                <div className="flex justify-end">
+                <div className="flex justify-end lg:w-auto">
                   <div className="relative" ref={filterMenuRef}>
                     <Button
                       size="sm"
                       variant="outline"
-                      className="inline-flex h-11 items-center gap-2 px-4"
+                      className="inline-flex h-11 items-center gap-2 px-4 w-full lg:w-auto"
                       aria-label="Filter users"
                       aria-pressed={filterMenuOpen}
                       onClick={(event) => {
@@ -392,7 +379,7 @@ const UserManagement = () => {
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-lg border border-gray-300 bg-white">
+            <div className="overflow-x-auto rounded-lg border border-gray-300 bg-white">
               <table className="min-w-full border-separate border-spacing-0 text-sm text-gray-700">
                 <thead
                   className="font-geist text-sm text-gray-600
