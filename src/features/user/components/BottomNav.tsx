@@ -45,20 +45,20 @@ const BottomNav = () => {
   const location = useLocation();
 
   const floatingButtonPosition =
-    location.pathname === '/scan' ? 'bg-brand-600 bottom-4' : 'bg-brand-500 bottom-3';
+    location.pathname === '/scan' ? 'bg-gradient-to-b from-brand-500 to-brand-700 bottom-5 shadow-lg' : 'bg-gradient-to-b from-brand-500 to-brand-700 bottom-3';
 
   return (
     <>
       <button
         type="button"
         onClick={() => navigate('/scan')}
-        className={`fixed left-1/2 z-30 flex h-18 w-18 -translate-x-1/2 items-center justify-center rounded-full text-white shadow-lg transition-transform duration-300 ease-in-out ${floatingButtonPosition}`}
+        className={`fixed left-1/2 z-30 flex h-18 w-18 -translate-x-1/2 items-center justify-center rounded-full text-white shadow-lg transition-transform duration-100 ease-in-out ${floatingButtonPosition}`}
         aria-label="Scan QR"
       >
         <BiQrScan className="text-3xl" />
       </button>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-200 bg-white/80 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-200 bg-geist-50 backdrop-blur">
         <div className="grid grid-cols-2 gap-14 px-2 pb-safe">
           {tabs.map((tab) => {
             const isActive = location.pathname === tab.path;

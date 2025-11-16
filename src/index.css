@@ -43,11 +43,29 @@
     body {
         font-family: inherit;
         margin: 0;
-        min-height: 100vh;
+        min-height: 100dvh;
         background-color: inherit;
     }
 
     * {
         font-family: inherit;
+        scroll-behavior: smooth;
     }
+}
+
+@layer utilities {
+  @keyframes scan-pulse {
+    0%, 100% {
+      --tw-scale-x: 1;
+      --tw-scale-y: 1;
+    }
+    50% {
+      --tw-scale-x: 1.25;
+      --tw-scale-y: 1.25;
+    }
+  }
+
+  .animate-scan-pulse {
+    animation: scan-pulse 1.2s ease-in-out infinite;
+  }
 }
