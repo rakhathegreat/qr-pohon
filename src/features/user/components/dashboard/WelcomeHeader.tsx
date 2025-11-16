@@ -17,7 +17,7 @@ const WelcomeHeader = memo(({ firstName, points }: WelcomeHeaderProps) => (
             <span className="text-sm text-brand-700 font-semibold">{points}</span>
           </div>
         </div>
-        <div className="rounded-full h-10 w-10 bg-gray-500 ring-2 ring-brand-600" aria-hidden />
+        {/* <div className="rounded-full h-10 w-10 bg-gray-500 ring-2 ring-brand-600" aria-hidden /> */}
       </div>
     </div>
   </section>

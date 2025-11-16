@@ -8,10 +8,12 @@ import LevelProgressCard from '@features/user/components/dashboard/LevelProgress
 import WelcomeHeader from '@features/user/components/dashboard/WelcomeHeader';
 import { DASHBOARD_METRICS, DASHBOARD_USER, DAILY_MISSIONS, RECENT_BADGES } from '@features/user/data/dashboard';
 import { useAuthUser } from '@features/user/hooks/useAuthUser';
+import { useScanStats } from '@features/user/hooks/useScanStats';
 import { getNextLevelProgress } from '@features/user/utils/progress';
 
 function Main() {
   const { user } = useAuthUser();
+  const { totalCount: scanCount } = useScanStats(user?.id);
 
   const displayName = useMemo(
     () =>
@@ -29,6 +31,8 @@ function Main() {
     []
   );
 
+  const treesScanned = scanCount ?? DASHBOARD_METRICS.treesScanned;
+
   return (
     <div className="min-h-screen bg-brand-50 ">
       <div className="space-y-4 py-4">
@@ -39,7 +43,7 @@ function Main() {
           target={progressNextLevel.target}
           pct={progressNextLevel.pct}
         />
-        <StatCardsRow treesScanned={DASHBOARD_METRICS.treesScanned} rankLabel={DASHBOARD_METRICS.rankLabel} />
+        <StatCardsRow treesScanned={treesScanned} rankLabel={DASHBOARD_METRICS.rankLabel} />
         <RecentBadges badges={RECENT_BADGES} />
         <MissionList missions={DAILY_MISSIONS} />
         <section className="h-20" />

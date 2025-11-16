@@ -1,9 +1,12 @@
 // src/pages/Profile.tsx
 import { useEffect, useMemo, useState } from 'react';
-import { Calendar, MapPin, QrCode, Sparkles } from 'lucide-react';
+import { Calendar, MapPin, QrCode, Sparkles, History } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 import BottomNav from '@features/user/components/BottomNav';
 import { useAuthUser } from '@features/user/hooks/useAuthUser';
+import { useScanStats } from '@features/user/hooks/useScanStats';
+import { useScanHistory } from '@features/user/hooks/useScanHistory';
 
 import { Button } from '@shared/components/Button';
 import Badge from '@shared/components/Badge';
@@ -19,11 +22,21 @@ const milestones = [
 const Profile = () => {
   const [scanCount, setScanCount] = useState(0);
   const { user, loading: loadingProfile } = useAuthUser();
+  const { totalCount: remoteScanCount } = useScanStats(user?.id);
+  const { history: scanHistory, loading: loadingHistory } = useScanHistory(user?.id);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const saved = Number(localStorage.getItem('scanCount') || '0');
     setScanCount(saved);
   }, []);
+
+  useEffect(() => {
+    if (remoteScanCount != null) {
+      setScanCount(remoteScanCount);
+      localStorage.setItem('scanCount', String(remoteScanCount));
+    }
+  }, [remoteScanCount]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -110,7 +123,7 @@ const Profile = () => {
                 aria-valuemax={100}
               >
                 <div
-                  className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-white via-white to-amber-100/80 shadow-[0_0_0_1px_rgba(255,255,255,0.35)] transition-[width] duration-500 ease-out"
+                  className="absolute inset-y-0 left-0 rounded-full bg-white transition-[width] duration-500 ease-out"
                   style={{
                     width: `${Math.min(100, Math.round((scanCount / nextMilestone.target) * 100))}%`,
                   }}
@@ -118,6 +131,58 @@ const Profile = () => {
               </div>
             </div>
           )}
+        </section>
+
+        <section className="rounded-2xl border border-gray-200 bg-white p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-brand-700">
+              <History className="h-5 w-5" />
+              <h2 className="text-lg font-semibold text-brand-800">Riwayat Scan</h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/scan-history')}
+              className="text-sm font-medium text-brand-600 hover:text-brand-700"
+            >
+              View all
+            </button>
+          </div>
+          <div className="mt-4 space-y-3">
+            {loadingHistory ? (
+              <p className="text-sm text-gray-600">Memuat riwayat...</p>
+            ) : scanHistory.length === 0 ? (
+              <p className="text-sm text-gray-600">Belum ada riwayat scan.</p>
+            ) : (
+              scanHistory.slice(0, 3).map((item) => (
+                <a
+                  key={item.id}
+                  href={`/detail/${item.data_pohon_id ?? ''}`}
+                  className="flex items-center justify-between rounded-xl border border-gray-300 bg-brand-50/40 p-4 text-sm text-brand-800 hover:border-brand-200 transition"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand-100 text-brand-700 ring-1 ring-brand-200">
+                      <QrCode className="h-4 w-4" />
+                    </span>
+                    <div className="flex flex-col space-y-1">
+                      <span className="text-brand-800 font-semibold">
+                        Pohon {(item.data_pohon.jenis_pohon.common_name as string) || 'Unknown'}
+                      </span>
+                      <span className="text-xs text-brand-700/70">
+                        {new Date(item.created_at).toLocaleTimeString('id-ID', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-xs font-medium text-brand-600">Lihat detail</span>
+                </a>
+              ))
+            )}
+          </div>
         </section>
 
         <section className="rounded-2xl border border-gray-200 bg-white p-5">
@@ -179,7 +244,7 @@ const Profile = () => {
                       aria-valuemax={100}
                     >
                       <div
-                        className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-brand-500 via-brand-500 to-amber-200 shadow-[0_0_0_1px_rgba(45,79,61,0.25)] transition-[width] duration-500 ease-out"
+                        className="absolute inset-y-0 left-0 rounded-full bg-brand-600 transition-[width] duration-500 ease-out"
                         style={{ width: `${progress}%` }}
                       />
                     </div>

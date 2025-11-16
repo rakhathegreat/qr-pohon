@@ -1,12 +1,69 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import BottomNav from '@features/user/components/BottomNav';
 import { Scan as ScanIcon } from 'lucide-react';
+
+import { useAuthUser } from '@features/user/hooks/useAuthUser';
+import { supabase } from '@shared/services/supabase';
 
 const qrcodeRegionId = 'qr-reader';
 
 const Scan = () => {
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const processedRef = useRef(false);
+  const { user } = useAuthUser();
+
+  const handleSuccessfulScan = useCallback(
+    async (decodedText: string) => {
+      if (processedRef.current) return; // hindari insert ganda saat kamera masih aktif
+      processedRef.current = true;
+
+      const raw = decodedText.trim();
+      let id = raw;
+
+      // 1) Coba parse sebagai URL
+      try {
+        const url = new URL(raw);
+        const segments = url.pathname.split('/').filter(Boolean);
+        // contoh: /detail/a2f7b1d9-5c41-42c1-92f2-7b1ad3e10e55
+        id = segments[segments.length - 1]; // ambil UUID-nya
+      } catch {
+        // 2) Kalau bukan URL tapi masih mengandung '/', ambil bagian terakhir juga
+        const parts = raw.split('/').filter(Boolean);
+        id = parts[parts.length - 1];
+      }
+
+      // OPTIONAL: kalau QR berisi encoded value
+      id = decodeURIComponent(id);
+
+      // Matikan kamera lebih dulu supaya callback tidak terpicu lagi
+      try {
+        await scannerRef.current?.stop();
+        await scannerRef.current?.clear();
+      } catch {
+        // ignore
+      }
+
+      // Simpan riwayat scan (sekarang id = UUID, cocok dengan data_pohon.id)
+      try {
+        const { error } = await supabase.from('scan').insert({
+          data_pohon_id: id,    // kolom ini pasti tipe uuid → OK
+          user_id: user?.id ?? null,
+        });
+
+        if (error) {
+          console.error('Supabase insert error:', error.message);
+        }
+      } catch (error) {
+        console.error('Gagal menyimpan scan', error);
+      }
+
+      // Arahkan ke halaman detail dengan ID yang sudah bersih
+      window.location.href = `/detail/${encodeURIComponent(id)}`;
+    },
+    [user?.id]
+  );
+
 
   useEffect(() => {
     const html5Qrcode = new Html5Qrcode(qrcodeRegionId);
@@ -32,15 +89,7 @@ const Scan = () => {
     };
 
     html5Qrcode
-      .start(
-        { facingMode: 'environment' },
-        { fps: 10, aspectRatio: 1.777778 },
-        (decodedText) => {
-          const id = decodedText.trim();
-          window.location.href = `/detail/${encodeURIComponent(id)}`;
-        },
-        () => {}
-      )
+      .start({ facingMode: 'environment' }, { fps: 10, aspectRatio: 1.777778 }, handleSuccessfulScan, () => {})
       .then(() => {
         scannerRef.current = html5Qrcode;
         applyFullSizeVideo();
@@ -57,7 +106,7 @@ const Scan = () => {
           .catch(() => {});
       }
     };
-  }, []);
+  }, [handleSuccessfulScan]);
 
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-black">
