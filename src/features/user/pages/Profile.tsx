@@ -1,9 +1,9 @@
 // src/pages/Profile.tsx
 import { useEffect, useMemo, useState } from 'react';
-import type { User } from '@supabase/supabase-js';
-import { Calendar, LogOut, MapPin, QrCode, Sparkles } from 'lucide-react';
+import { Calendar, MapPin, QrCode, Sparkles } from 'lucide-react';
 
 import BottomNav from '@features/user/components/BottomNav';
+import { useAuthUser } from '@features/user/hooks/useAuthUser';
 
 import { Button } from '@shared/components/Button';
 import Badge from '@shared/components/Badge';
@@ -18,24 +18,11 @@ const milestones = [
 
 const Profile = () => {
   const [scanCount, setScanCount] = useState(0);
-  const [user, setUser] = useState<User | null>(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
+  const { user, loading: loadingProfile } = useAuthUser();
 
   useEffect(() => {
     const saved = Number(localStorage.getItem('scanCount') || '0');
     setScanCount(saved);
-  }, []);
-
-  useEffect(() => {
-    let ignore = false;
-    supabase.auth.getUser().then(({ data, error }) => {
-      if (ignore) return;
-      if (!error) setUser(data.user ?? null);
-      setLoadingProfile(false);
-    });
-    return () => {
-      ignore = true;
-    };
   }, []);
 
   const handleLogout = async () => {
